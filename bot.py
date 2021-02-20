@@ -4,10 +4,6 @@ import concurrent.futures
 from engine import Ball
 team = 0
 boardState = []
-
-
-boardState = 0
-
 #return the touple containing the velocity and angle of the next AI move
 def getAIMove(bs):
     boardState = bs
@@ -119,11 +115,23 @@ def getPaths(ball, traj):
     #base case too long of a path or the ball is the que ball
     if(ball.id == 0):
         return (ball, traj)
-    elif(traj[0]> 1000):
+    elif(traj[0]> 10):
         return 0
 
     #gets all of the balls that can hit the current ball and give it the desired trajectory
     balls, trajs = getPossibleBalls(ball, traj[0], traj[1])
+    wallBall=getWallBall(ball, traj)
+    if wallBall.id !=-1:
+        balls.append(wallBall)
+        x= traj[0]*math.sin(math.radians(traj[1]))
+        y= traj[0]*math.cos(math.radians(traj[1]))
+        if wallBall.pos[0] == engine.BALLRADIUS or wallBall.pos[0] == 500-engine.BALLRADIUS:
+            x=-x
+        else:
+            y=-y
+        wallBallTheta = math.degrees(math.atan(y/x))
+        trajs.append((traj[0], wallBallTheta))
+   
     paths = []
 
     if int(ball.id / 8) != team:
@@ -158,3 +166,40 @@ def getScore(v, theta):
                 roundScore = -1
         score += roundScore
     return score
+
+def getWallBall(ball, traj):
+    outputBall = Ball(ball.id,0,0)
+    thetaFinal = (traj[1]+180)%360
+    thetaOne    = math.degrees(      math.atan((500-engine.BALLRADIUS-ball.pos[1])/(1000-engine.BALLRADIUS-ball.pos[0])))
+    thetaTwo    = math.degrees(180 - math.atan((500-engine.BALLRADIUS-ball.pos[1])/(ball.pos[0]-engine.BALLRADIUS)))
+    thetaThree  = math.degrees(180 + math.atan((ball.pos[1]-engine.BALLRADIUS)/(ball.pos[0]-engine.BALLRADIUS)))
+    thetaFour   = math.degrees(360 - math.atan((ball.pos[1]-engine.BALLRADIUS)/(1000-engine.BALLRADIUS-ball.pos[0])))
+    if(thetaFinal>thetaOne and thetaFinal<thetaTwo): #Top wall
+        if(thetaFinal<90):
+            outputBall = Ball(ball.id, ball.pos[0]+math.tan(math.radians(thetaFinal))/(500-engine.BALLRADIUS-ball.pos[1]),  500-engine.BALLRADIUS)
+        else:
+            outputBall = Ball(ball.id, ball.pos[0]-math.tan(math.radians(180-thetaFinal))/(500-ball.pos[1]),                500-engine.BALLRADIUS)
+
+    elif(thetaFinal>thetaTwo and thetaFinal<thetaThree): #Left wall
+        if(thetaFinal<180):
+            outputBall = Ball(ball.id, 0    +engine.BALLRADIUS, ball.pos[1] + math.tan(math.radians(180-thetaFinal))*(ball.pos[0]-engine.BALLRADIUS))
+        else:
+            outputBall = Ball(ball.id, 0    -engine.BALLRADIUS, ball.pos[1] - math.tan(math.radians(thetaFinal-180))*(ball.pos[0]-engine.BALLRADIUS))
+
+    elif(thetaFinal>thetaThree and thetaFinal<thetaFour): # Bottom wall
+        if(thetaFinal<270):
+            outputBall = Ball(ball.id,      ball[0]-math.tan(math.radians(thetaFinal-180))/(ball.pos[1]-engine.BALLRADIUS), 0+engine.BALLRADIUS)
+        else:
+            outputBall = Ball(ball.id,      ball[0]+math.tan(math.radians(360-thetaFinal))/(ball.pos[1]-engine.BALLRADIUS), 0+engine.BALLRADIUS)
+
+    elif(thetaFinal<thetaOne or thetaFinal>thetaFour): #Right wall
+        if(thetaFinal<90):
+            outputBall = Ball(ball.id, 1000 -engine.BALLRADIUS, ball.pos[1]-math.tan(math.radians(360-thetaFinal))*(ball.pos[0]-engine.BALLRADIUS))
+        else:
+            outputBall = Ball(ball.id, 1000 +engine.BALLRADIUS, ball.pos[1]-math.tan(math.radians(thetaFinal))*(ball.pos[0]-engine.BALLRADIUS))
+
+    else:
+        outputBall = Ball(-1, 0, 0)
+    if(outputBall.pos[0]<engine.BALLRADIUS or outputBall.pos[1]<engine.BALLRADIUS or outputBall.pos[0]>1000-engine.BALLRADIUS or outputBall.pos[1]>500-engine.BALLRADIUS):
+        outputBall = Ball(-1,0,0)
+    return outputBall
