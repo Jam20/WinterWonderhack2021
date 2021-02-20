@@ -99,11 +99,13 @@ def getPocketPaths(pocketID):
     
     #loops through each of the balls 
     for i in range(len(balls)):
-        if(balls[i].id != 0 or int(balls[i].id / 8) != team): #if the ball is not the que or an enemy ball
+        if(balls[i].id != 0 or int(balls[i].id / 8) != team): #if the ball is the que or an enemy ball remove it
             del balls[i]
             del trajs[i]
+    
+    
     with concurrent.futures.ProcessPoolExecutor as executor:
-        results = executor.map(getPaths,balls,trajs)
+        results = executor.map(getPaths,balls,trajs) #create a thread for each of the balls that appends to a list when it finishes if valid
         for result in results:
             if(results != 0):
                 paths.append(result)
@@ -120,20 +122,26 @@ def getPaths(ball, traj):
 
     #gets all of the balls that can hit the current ball and give it the desired trajectory
     balls, trajs = getPossibleBalls(ball, traj[0], traj[1])
+
+    #gets a virtual ball that can hit the current ball with the trajectory that is tangent to a wall
     wallBall=getWallBall(ball, traj)
-    if wallBall.id !=-1:
-        balls.append(wallBall)
+    if wallBall.id !=-1: #if it is a valid wall ball
+        balls.append(wallBall) #add it to the balls list
+
+        #calculate the angle based of the wall the wallball is on and the desired angle
         x= traj[0]*math.sin(math.radians(traj[1]))
-        y= traj[0]*math.cos(math.radians(traj[1]))
+        y= traj[0]*math.cos(math.radians(traj[1])) 
         if wallBall.pos[0] == engine.BALLRADIUS or wallBall.pos[0] == 500-engine.BALLRADIUS:
             x=-x
         else:
             y=-y
         wallBallTheta = math.degrees(math.atan(y/x))
+        #add the angle and velocity magnitude to the list
         trajs.append((traj[0], wallBallTheta))
    
     paths = []
 
+    #if the ball is an enemy ball remove the que ball from the possible balls because can't hit enemy ball with que ball first
     if int(ball.id / 8) != team:
         for i in range(len(balls)):
             if(ball.id == 0):
@@ -151,10 +159,17 @@ def getPaths(ball, traj):
 #gets the score associated with a possible move from the engine simulation
 def getScore(v, theta):
 
+    #simulates the motion using the games physics engine
     bs = engine.simulate(0, v, theta)
     score = 0
+    
+    #loops through the all the balls in the final board state
     for ball in boardState:
+
+        #looks for which balls are not in the new boards state aka scored
         if not (ball in bs):
+
+            #based on which ball is scored set the score for that ball
             roundScore = 0
             if(int(ball.id / 8) == team):
                 roundScore = 1
@@ -164,6 +179,7 @@ def getScore(v, theta):
                     roundScore = -10
             else:
                 roundScore = -1
+        #total the score for each ball scored
         score += roundScore
     return score
 
