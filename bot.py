@@ -77,14 +77,13 @@ def getPossibleBalls(ball, v, theta):
                     elif compareball.x <= xrad_normalized and compareball.x >= ball_cord.x:
                         output_poolballs.remove(ball_cord)
             
-    
-    
+        # Math function to find the needed Velocity to hit ball into hole
+    for ball_cord in output_poolballs:
+        hypotVelocity = v / math.sin(math.atan((yrad_normalized - ball_cord.y)/(xrad_normalized - ball_cord.x)))
+        output_poolballsVelocity.append(hypotVelocity)
 
-                    
+    return output_poolballs, output_poolballsVelocity
 
-
-
-    return
 
 #gets the possible velocity and angle touples for making a ball into a pocket defined by pocketID
 def getPocketPaths(pocketID):
