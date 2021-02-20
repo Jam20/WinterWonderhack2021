@@ -1,7 +1,7 @@
 import pygame
 import random
-import os
 from screeninfo import get_monitors
+import math
 
 import bot
 from engine import Ball
@@ -51,7 +51,7 @@ class GameManager:
 
     pygame.quit()
 
-    # Utiltiy that grabs the cue ball and the possibility of a scratch
+    # Utiltiy that grabs the cue ball
     def getCue(self):
         for ball in self.balls:
             if ball.id == 0:
@@ -91,6 +91,7 @@ class GameManager:
 
                 # Calc Angle
                 angle = self.getAngle(playerX, playerY)
+                print(angle)
 
             self.updateScreen(True)
 
@@ -130,14 +131,43 @@ class GameManager:
         # Check if the user x or y is equal with cue x or y
         # If x similar
         if (cueX == userX):
-            pass
+            if (cueY < userY):
+                angle = 270
+            else:
+                angle = 90
 
         # If y similar
         elif (cueY == userY):
-            pass
+            if (cueX > userX):
+                angle = 180
+            else:
+                angle = 0
 
-        print(angle)
-        return angle
+        # Check for Quadrant 1
+        elif (cueX < userX and cueY > userY):
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+
+        # Check for Quadrant 2
+        elif (cueX > userX and cueY > userY):
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+            angle = 90 + (90 - angle)
+
+        # Check for Quadrant 3
+        elif (cueX > userX and cueY < userY):
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+            angle = angle + 180
+
+        # Check for Quadrant 4
+        else:
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+            angle = 270 + (90 - angle)
+
+        # Have to add 180 degrees to reverse direction
+        return angle + 180
 
     # Sets the balls
     def initBalls(self):
