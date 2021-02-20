@@ -1,5 +1,7 @@
 import pygame
 import random
+import os
+from screeninfo import get_monitors
 
 import bot
 from engine import Ball
@@ -7,13 +9,18 @@ from engine import Ball
 class GameManager:
     # Constructor
     def __init__(self):
-        self.pixelInch = 18
+        mnum = 1 if len(get_monitors()) > 1 else 0
+        self.pixelInch = int((get_monitors()[mnum].width / 100))
         self.bumper = 6 * self.pixelInch
         self.boardWidth = self.pixelInch * 88;
         self.boardHeight = self.pixelInch * 44;
         self.screenWidth = self.boardWidth + self.bumper
         self.screenHeight = self.boardHeight + self.bumper
         self.ballRadius = 1.125 * self.pixelInch;
+
+        self.maxVel = 5     # The max velocity in inches/second
+        self.maxDraw = 22   # The max distance you can pull the poolstick back (in)
+
         self.screen = pygame.display.set_mode([self.screenWidth, self.screenHeight])
         self.clock = pygame.time.Clock()
 
@@ -31,20 +38,106 @@ class GameManager:
 
         self.initBalls()
 
-
         while run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
 
+            self.getPlayer()
 
-            self.updateScreen()
+            run = False
+
+            self.updateScreen(False)
 
     pygame.quit()
 
+    # Utiltiy that grabs the cue ball and the possibility of a scratch
+    def getCue(self):
+        for ball in self.balls:
+            if ball.id == 0:
+                return ball
+
+    # Convert x board coordinate to pixel coordinate
+    def xToPixel(self, distance):
+         return distance * self.pixelInch + ((self.screenWidth - self.boardWidth) // 2)
+
+    # Convert y board coordinate to pixel coordinate
+    def yToPixel(self, distance):
+        return self.screenHeight - (distance * self.pixelInch) - ((self.screenHeight - self.boardHeight) // 2)
+
     # Gets the players input
+    # Returns velocity and angle
     def getPlayer(self):
-        pass
+        hasGone = False
+
+        while not hasGone:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    bashGone = True
+
+            hasGone = pygame.mouse.get_pressed()[0]
+
+            # If the player has gone, calculate angle and velocity
+            if(hasGone):
+                playerX, playerY = pygame.mouse.get_pos()
+                (cueX, cueY) = self.getCue().pos
+
+                cueX = self.xToPixel(cueX)
+                cueY = self.yToPixel(cueY)
+
+                # Calc Distance
+                distance =  self.getDistance(playerX, playerY, cueX, cueY)
+                velocity = self.maxVel * (distance / (self.maxDraw * self.pixelInch))
+
+                # Calc Angle
+                angle = self.getAngle(playerX, playerY)
+
+            self.updateScreen(True)
+
+    # Draws simple cuestick
+    def drawPoolStick(self):
+        playerX, playerY = pygame.mouse.get_pos()
+        (cueX, cueY) = self.getCue().pos
+
+        cueX = self.xToPixel(cueX)
+        cueY = self.yToPixel(cueY)
+
+        pygame.draw.line(self.screen, (255,25,22), (playerX, playerY), (cueX, cueY), 3)
+
+    # Get distance between two points
+    # Will restrict distance if it is past maxDraw, useful for mapping force 
+    def getDistance(self, x1, y1, x2, y2):
+        maxDistancePixels = self.maxDraw * self.pixelInch
+
+        distance = ((x2 - x1)**2 + (y2 - y1)**2)**.5
+
+        if (distance > maxDistancePixels):
+            return maxDistancePixels
+        
+        else:
+            return distance
+        
+
+    # Get the angle of the line draw from cue tip to cue ball
+    def getAngle(self, userX, userY):
+        (cueX, cueY) = self.getCue().pos
+
+        cueX = self.xToPixel(cueX)
+        cueY = self.yToPixel(cueY)
+
+        angle = None
+
+        # Check if the user x or y is equal with cue x or y
+        # If x similar
+        if (cueX == userX):
+            pass
+
+        # If y similar
+        elif (cueY == userY):
+            pass
+
+        print(angle)
+        return angle
 
     # Sets the balls
     def initBalls(self):
@@ -71,10 +164,12 @@ class GameManager:
             self.balls.append(temp)
 
     # Updates the screen
-    def updateScreen(self):
+    def updateScreen(self, isPlayer):
         self.screen.fill((255, 255, 255))
         self.drawTable()
         self.drawBalls()
+        if( isPlayer ):
+            self.drawPoolStick()
         pygame.display.flip()
 
     # Draws the table
@@ -109,11 +204,9 @@ class GameManager:
 
     # Made seperate to call for drawing balls and pockets
     def drawBall(self, ball, radius):
-        xOffset = (self.screenWidth - self.boardWidth) // 2
-        yOffset = (self.screenHeight - self.boardHeight) // 2
 
-        x = (ball.pos[0] * self.pixelInch) + xOffset
-        y = self.screenHeight - yOffset - ball.pos[1] * self.pixelInch
+        x = self.xToPixel(ball.pos[0])
+        y = self.yToPixel(ball.pos[1])
 
         pygame.draw.circle(self.screen, ball.color, (x, y), radius)
         
@@ -141,17 +234,6 @@ class GameManager:
 if __name__ == "__main__":
     game = GameManager()
     game.run()
-
-
-
-
-
-
-
-
-
-
-
 
 
 
