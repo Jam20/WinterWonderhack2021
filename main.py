@@ -130,7 +130,7 @@ class GameManager:
         # Check if the user x or y is equal with cue x or y
         # If x similar
         if (cueX == userX):
-            pass
+            
 
         # If y similar
         elif (cueY == userY):
