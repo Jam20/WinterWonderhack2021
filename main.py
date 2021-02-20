@@ -1,7 +1,8 @@
 import pygame
+import random
+
 import bot
 from engine import Ball
-
 
 class GameManager:
     # Constructor
@@ -14,7 +15,15 @@ class GameManager:
         self.screenHeight = self.boardHeight + self.bumper
         self.ballRadius = 1.125 * self.pixelInch;
         self.screen = pygame.display.set_mode([self.screenWidth, self.screenHeight])
+        self.clock = pygame.time.Clock()
+
         self.balls = []
+
+        # Init pygame
+        pygame.init()
+        pygame.font.init()
+        self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
+        pygame.display.set_caption("Amazing Pool Bot")
 
     # Game loop
     def run(self):
@@ -22,8 +31,6 @@ class GameManager:
 
         self.initBalls()
 
-        pygame.init()
-        pygame.display.set_caption("Amazing Pool Bot")
 
         while run:
             for event in pygame.event.get():
@@ -35,9 +42,33 @@ class GameManager:
 
     pygame.quit()
 
+    # Gets the players input
+    def getPlayer(self):
+        pass
+
     # Sets the balls
     def initBalls(self):
-        self.balls.append(Ball(1, 44, 22, (255, 0, 0), False))
+        # (id, color, isStriped)
+        ballparams = [(0,  66, 22, (255, 255, 255), False),  # Cue Ball
+                      (1,  22, 22, (242, 230, 0),   False),
+                      (2,  20, 23.15, (12, 23, 237),   False), 
+                      (3,  20, 20.85, (212, 26, 13),   False), 
+                      (4,  18, 24.3, (117, 33, 219),  False), 
+                      (5,  18, 22, (242, 149, 0),   False), 
+                      (6,  18, 19.7, (27, 117, 2),    False), 
+                      (7,  16, 25.45, (179, 30, 70),   False), 
+                      (8,  16, 23.15, (0, 0, 0),       False), 
+                      (9,  16, 20.85, (242, 230, 0),   True), 
+                      (10, 16, 18.55, (12, 23, 237),   True), 
+                      (11, 14, 26.6, (212, 26, 13),   True), 
+                      (12, 14, 24.3, (117, 33, 219),  True), 
+                      (13, 14, 22, (242, 149, 0),   True), 
+                      (14, 14, 19.7, (27, 117, 2),    True), 
+                      (15, 14, 17.4, (179, 30, 70),   True)]
+
+        for param in ballparams:
+            temp = Ball(param[0], param[1], param[2], param[3], param[4])
+            self.balls.append(temp)
 
     # Updates the screen
     def updateScreen(self):
@@ -64,7 +95,8 @@ class GameManager:
                 (44, 0, centerPockets), (88, 0, cornerPockets)] 
 
         for pocket in pockets:
-            self.drawBall(Ball(0, pocket[0], pocket[1], (0, 0, 0), False), pocket[2])
+            # -1 indicates not a playable ball
+            self.drawBall(Ball(-1, pocket[0], pocket[1], (0, 0, 0), False), pocket[2])
 
         # Draw Felt
         pygame.draw.rect(self.screen, (0,255,0), (xOffset, yOffset, self.boardWidth, self.boardHeight))
@@ -84,10 +116,27 @@ class GameManager:
         y = self.screenHeight - yOffset - ball.pos[1] * self.pixelInch
 
         pygame.draw.circle(self.screen, ball.color, (x, y), radius)
+        
+        # If it is a numbered ball
+        if(ball.id > 0):
+            # For circle for solids
+            if not ball.isStriped:
+                pygame.draw.circle(self.screen, (255,255,255), (x, y), radius / 2)
 
-    # Gets the players input
-    def getPlayer(self):
-        pass
+            # Draw crappy striped
+            else:
+                pygame.draw.rect(self.screen, (255, 255, 255), (x - radius * 0.70, 
+                    y - radius / 2, radius * 1.6, radius))
+
+
+        # Draw number on ball
+        text = self.myfont.render(f"{ball.id}", False, (0, 0, 0))
+
+        textXOffset = text.get_width() // 2
+        textYOffset = text.get_height() // 2
+
+        self.screen.blit(text, (x - textXOffset, y - textYOffset))
+
 
 if __name__ == "__main__":
     game = GameManager()
