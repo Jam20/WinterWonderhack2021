@@ -314,8 +314,8 @@ class GameManager:
                 (44, 0, centerPockets), (88, 0, cornerPockets)] 
 
         for pocket in pockets:
-            # -1 indicates not a playable ball
-            self.drawBall(Ball(-1, pocket[0], pocket[1], (0, 0, 0), False), pocket[2])
+            # -2 indicates not a playable ball
+            self.drawBall(Ball(-2, pocket[0], pocket[1], (0, 0, 0), False), pocket[2])
 
         # Draw Felt
         pygame.draw.rect(self.screen, (0,255,0), (xOffset, yOffset, self.boardWidth, self.boardHeight))
@@ -328,7 +328,7 @@ class GameManager:
 
     # Made seperate to call for drawing balls and pockets
     def drawBall(self, ball, radius):
-        if(ball.id >= 0):
+        if(ball.id != -1):
             x = self.xToPixel(ball.pos[0])
             y = self.yToPixel(ball.pos[1])
 
