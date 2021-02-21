@@ -55,8 +55,8 @@ def movingBall(v,theta, boardState):
                 deltaX = xVel*TIMESTEP+.5*math.copysign(FRIC,-xVel)*math.pow(TIMESTEP,2)
                 deltaY = yVel*TIMESTEP+.5*math.copysign(FRIC,-yVel)*math.pow(TIMESTEP,2)
 
-                xVel = xVel + math.copysign(FRIC,-xVel)*TIMESTEP
-                yVel = yVel + math.copysign(FRIC,-yVel)*TIMESTEP
+                #xVel = xVel + math.copysign(FRIC,-xVel)*TIMESTEP
+                #yVel = yVel + math.copysign(FRIC,-yVel)*TIMESTEP
 
                 currentPos[0] += deltaX
                 currentPos[1] += deltaY
@@ -90,18 +90,15 @@ def movingBall(v,theta, boardState):
                                 adjTheta = newTheta-90
                                 ball.velocity = inVelMag*math.sin(math.degrees(adjTheta))
                                 cBall.velocity = inVelMag*math.cos(math.degrees(adjTheta))
-                                
-                newBall = Ball(ball.id,currentPos[0],currentPos[1],ball.color,ball.isStriped, ball.velocity+FRIC*TIMESTEP, math.degrees(math.atan2(yVel,xVel)))
+                velocity = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
+                velocity= velocity+FRIC*TIMESTEP
+                newBall = Ball(ball.id,currentPos[0],currentPos[1],ball.color,ball.isStriped, velocity, math.degrees(math.atan2(yVel,xVel)))
                 newBoardState.append(newBall)
             else:
                 newBall = Ball(ball.id,ball.pos[0],ball.pos[1],ball.color,ball.isStriped,ball.velocity,ball.theta)
                 newBoardState.append(newBall)
         output.append(newBoardState)
         boardState = newBoardState
-        for ball in boardState:
-            ball.theta = 0
-            ball.velocity = 0
-            ball.pos = (ball.pos[0]/QUARDCONVERT, ball.pos[1]/QUARDCONVERT)
     return output
 
  
