@@ -2,6 +2,7 @@ import pygame
 import random
 from screeninfo import get_monitors
 import math
+import time
 
 import bot
 from engine import Ball
@@ -50,6 +51,8 @@ class GameManager:
 
             self.updateScreen(False)
 
+            time.sleep(2)
+
 
 
     pygame.quit()
@@ -75,10 +78,10 @@ class GameManager:
         cueX = self.xToPixel(cueX)
         cueY = self.yToPixel(cueY)
 
-        deltaX = int((playerX - cueX) // 20)
-        deltaY = int((cueY - playerY) // 20)
+        deltaX = int((playerX - cueX) // 10)
+        deltaY = int((cueY - playerY) // 10)
 
-        for i in range(20):
+        for i in range(10):
             self.screen.fill((255, 255, 255))
             self.drawTable()
             self.drawBalls()
