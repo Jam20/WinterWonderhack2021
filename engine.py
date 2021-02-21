@@ -43,7 +43,6 @@ def movingBall(v,theta, boardState):
 
                 deltaY=0
                 deltaX=0
-                i= i+1
 
                 if theta>90 and theta<270 and xVel>0:
                     xVel = -xVel
