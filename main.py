@@ -30,6 +30,9 @@ class GameManager:
         self.clock = pygame.time.Clock()
         self.poolStick = PoolStick()
 
+        self.numStripes = 7;
+        self.numSolids = 7;
+
         self.balls = []
         self.run = True
 
@@ -48,17 +51,32 @@ class GameManager:
                 if event.type == pygame.QUIT:
                     exit()
 
-            # Player turn
-            (velocity, angle, playerX, playerY) = self.getPlayer()
 
-            frames = engine.movingBall(velocity, angle, self.balls)
+            while True:
+                print("Player 1")
+                # Player 1 turn - stripes
+                (velocity, angle, playerX, playerY) = self.getPlayer()
 
-            for frame in frames:
-                for ball in frame:
-                    ball.pos = (ball.pos[0] / engine.QUARDCONVERT, ball.pos[1] / engine.QUARDCONVERT)
+                frames = engine.movingBall(velocity, angle, self.balls)
 
-                self.balls = frame
-                self.updateScreen(False)
+                for frame in frames:
+                    for ball in frame:
+                        ball.pos = (ball.pos[0] / engine.QUARDCONVERT, ball.pos[1] / engine.QUARDCONVERT)
+
+                    self.balls = frame
+                    self.updateScreen(False)
+
+                if self.getCue() == None:
+                    for ball in self.balls:
+                        if ball.id == 8:
+                            ballparams = (0,  66, 22,    (255, 255, 255), False)
+                            new = Ball(ballparams[0], ballparams[1], ballparams[2], ballparams[3], ballparams[4])
+                            self.balls = [new] + self.balls
+
+                    if (self.getCue() == None):
+                        exit()
+                
+
 
         pygame.quit()
 
@@ -67,6 +85,8 @@ class GameManager:
         for ball in self.balls:
             if ball.id == 0:
                 return ball
+
+            return None
 
     # Convert x board coordinate to pixel coordinate
     def xToPixel(self, distance):
@@ -293,7 +313,8 @@ class GameManager:
         self.drawTable()
         self.drawBalls()
         if( isPlayer ):
-            self.drawPoolStick()
+            if (self.getCue() != None):
+                self.drawPoolStick()
         pygame.display.flip()
 
     # Draws the table
