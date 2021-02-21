@@ -48,15 +48,13 @@ class GameManager:
 
             (velocity, angle, playerX, playerY) = self.getPlayer()
 
-            self.strike(playerX, playerY, angle)
-
             frames = engine.movingBall(velocity, angle, self.balls)
 
             for frame in frames:
+                print(self.balls[0].pos)
                 self.balls = frame
-                self.drawBalls()
+                self.updateScreen(False)
 
-            self.updateScreen(False)
 
     pygame.quit()
 
@@ -336,7 +334,8 @@ class GameManager:
         textXOffset = text.get_width() // 2
         textYOffset = text.get_height() // 2
 
-        self.screen.blit(text, (x - textXOffset, int(y - textYOffset)))
+        if(ball.id > 0):
+            self.screen.blit(text, (x - textXOffset, int(y - textYOffset)))
 
 class PoolStick:
     def __init__(self):

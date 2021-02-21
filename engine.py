@@ -1,11 +1,12 @@
 import math
-
+import vector
 TIMESTEP = .01
 FRIC = -2500
 MAXVEL = 10000
 XDIMENTION = MAXVEL
 YDIMENTION = XDIMENTION/2
 BALLRADIUS = 2.25/44*YDIMENTION
+QUARDCONVERT = 113.636
 
 class Ball:
     def __init__(self, id, x, y, color, isStriped, velocity=0, theta=0):
@@ -23,7 +24,7 @@ def movingBall(v,theta, boardState):
         if ball.id == 0:
             ball.velocity = v
             ball.theta = theta
-    
+        ball.pos = (ball.pos[0]*QUARDCONVERT, ball.pos[1]*QUARDCONVERT)    
     done = bool(v==0)
     while not done:
         foundVel= False
@@ -32,7 +33,6 @@ def movingBall(v,theta, boardState):
             if ball.velocity>0:
                 totalVel += ball.velocity
                 foundVel = True
-        print(f"Total velocity is {totalVel}")
         done = not foundVel
         for ball in boardState:
             if(ball.velocity!=0):
@@ -92,17 +92,19 @@ def movingBall(v,theta, boardState):
                                 cBall.velocity = inVelMag*math.cos(math.degrees(adjTheta))
 
                 ball.pos = (currentPos[0],currentPos[1])
-                ball.velocity = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
+                ball.velocity = ball.velocity+FRIC*TIMESTEP
                 ball.theta = math.degrees(math.atan2(yVel,xVel))
-        output.append(boardState)
+        outState = boardState
+        output.append(outState)
     for ball in boardState:
         ball.theta = 0
         ball.velocity = 0
+        ball.pos = (ball.pos[0]/QUARDCONVERT, ball.pos[1]/QUARDCONVERT)
     return output
 
  
 
-        
+
             
 
         

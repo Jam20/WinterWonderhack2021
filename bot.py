@@ -24,64 +24,116 @@ def getAIMove(bs):
 
     return output
 
+
+
 #returns a list of balls that can hit the inputted ball and result in velocity v and angle theta
 def getPossibleBalls(ball, v, theta):
+    bRadius = 2
     output_poolballs = []
+    output_poolballsVelocity = []
 
-    if v <  180:
-        projected_abovetan = False
+
+
+
+    #Cheater method to combat a dividing by zero clause
+    if theta == 90 or theta == 270:
+        theta +=.00001
+
+    #Flippin the desired output angle to find the Tangent line on the side of the 
+    #ball that the other balls will hit
+    if theta >= 180:
+        theta_new = theta - 180
     else:
-        projected_abovetan = True
+        theta_new = theta + 180
+    ###################################
 
-    theta_new = v + 180
-    xrad = 2 * math.cos(theta_new  * (math.pi/180))
-    yrad = 2 * math.sin(theta_new*(math.pi/180))
-
-    # Check how ball x positions are stored
-    xrad_normalized = xrad + ball.x
-    yrad_normalized = yrad + ball.y
-
-    # determining the gradient of the radius
-    rad_gradient = (yrad_normalized - ball.y)/(xrad_normalized - ball.y)
-    tangent_grad = -1/rad_gradient
+    #Turned into np.Array touple. Look so see if this is right
+    xyRadPoint = [(2*bRadius) * math.cos(math.radians(theta_new)), (2*bRadius) * math.sin(math.radians(theta_new))]
     
+    #Print Function to check
+    #print(xyRadPoint)
+    ###################################
+
+    #Updating the position of where to hit the q ball, Tangent line on side of ball needed to be hit
+    xyRadPoint[0], xyRadPoint[1] = xyRadPoint[0] + ball.pos[0], xyRadPoint[1] + ball.pos[1]
+
+    ####ATANTOO
+
+    #####################################################################################
+    #Finding the m of the point slope and the Tangent slope
+    #in the form of y = m*(x - x1) + y1
+
+    rad_gradient = (xyRadPoint[1] - ball.pos[1])/(xyRadPoint[0] - ball.pos[0])
+    tangent_grad = -1/rad_gradient
+    #####################################
+
 
     # Finding all the balls on the correct side of the tangent line
-    for poolballs in boardState:
-        tan_ypos = tangent_grad * (poolballs.x - xrad_normalized) + yrad_normalized
-        
-        if tan_ypos > poolballs.y:
-            above_tanline = False
-        else:
-            above_tanline = True
+    for poolball in boardState:
+        tan_ypos = tangent_grad * (poolball.pos[0] - xyRadPoint[0]) + xyRadPoint[1]
 
-        if projected_abovetan == False:
-            if above_tanline == False:
-                output_poolballs.append(poolballs)
-        else:
-            if above_tanline == True:
-                output_poolballs.append(poolballs)              
-        
+        if theta < 180 and tan_ypos > poolball.pos[1]:
+            output_poolballs.append(poolball)
+        elif theta > 180 and tan_ypos < poolball.pos[1]:
+            output_poolballs.append(poolball)
+            
 
     # Determining if a ball is on the path of the possible pool ball to hit
     for ball_cord in output_poolballs:
-        slope = (ball_cord.y - yrad_normalized) / (ball_cord.x - xrad_normalized)
-        for compareball in output_poolballs:
-            if ball_cord != compareball:
-                y_onpath = slope*(compareball.x  - xrad_normalized) + yrad_normalized
-                
-                # Can do better later on. Check to see if its on the line and in between the two balls
-                if y_onpath + 2 > compareball.y and y_onpath - 2 < compareball.y:
-                    if compareball.x >= xrad_normalized and compareball.x <= ball_cord.x:
-                        output_poolballs.remove(ball_cord)
-                    elif compareball.x <= xrad_normalized and compareball.x >= ball_cord.x:
-                        output_poolballs.remove(ball_cord)
-            
-        # Math function to find the needed Velocity to hit ball into hole
-    for ball_cord in output_poolballs:
-        hypotVelocity = v / math.sin(math.atan((yrad_normalized - ball_cord.y)/(xrad_normalized - ball_cord.x)))
-        output_poolballsVelocity.append(hypotVelocity)
+        #Getting the slope of the balls for the traveling path line
+        slope = (ball_cord.pos[1] - xyRadPoint[1]) / (ball_cord.pos[0] - xyRadPoint[0])
 
+
+        for compareball in output_poolballs:
+            if ball_cord != compareball or compareball != ball:
+                #Finds the projected traveling path
+                y_onpath = slope*(compareball.pos[0]  - xyRadPoint[0]) + xyRadPoint[1]
+                
+                #############################################################
+                #HELP ITS FAILING!! WHY IS THE BALL NOT IN THE LIST ANYMORE!!
+                # IF NEEDE YOU CAN CHANGE TO CHECKING IF THE PROJECTED POINT IS +- THE ACTUAL POINT OF THE INTERFERENCE BALL
+                #############################################################
+                if y_onpath + bRadius >= compareball.pos[1] >= y_onpath - bRadius:
+                #Possibility for change
+                #############################################################
+
+                    #For loops to set what x/y cordinate of the two balls for the path set on
+                    if ball_cord.pos[0] > xyRadPoint[0]:
+                        higherx = ball_cord.pos[0]
+                        lowerx = xyRadPoint[0]
+                    else:
+                        higherx = xyRadPoint[0]
+                        lowerx = ball_cord.pos[0]
+                    
+                    if ball_cord.pos[1] > xyRadPoint[1]:
+                        highery = ball_cord.pos[1]
+                        lowery = xyRadPoint[1]
+                    else:
+                        highery = xyRadPoint[1]
+                        lowery = ball_cord.pos[1]
+                    #############################################################
+    
+
+                    if lowerx <= compareball.pos[0] <= higherx and lowery <= compareball.pos[1] <= highery:
+                        #############################################################
+                        #HELP ITS FAILING!! WHY IS THE BALL NOT IN THE LIST ANYMORE!!
+                        #############################################################
+                        try:
+                            output_poolballs.remove(ball_cord)
+                        except ValueError:
+                            print('Remove from list failed', ball_cord.id, ball_cord.pos[0], ball_cord.pos[1])
+                            for i in output_poolballs:
+                                print(i.id, i.pos[0], i.pos[1])
+                        #############################################################
+                        #HELP ITS FAILING!! WHY IS THE BALL NOT IN THE LIST ANYMORE!!
+                        #############################################################
+
+
+    #Math function to find the needed Velocity to hit ball into hole
+    for ball_cordhelp in output_poolballs:
+        hypotVelocity = v / math.sin(math.atan((xyRadPoint[1] - ball_cordhelp.pos[1])/(xyRadPoint[0] - ball_cordhelp.pos[0])))
+        output_poolballsVelocity.append(hypotVelocity)
+    
     return output_poolballs, output_poolballsVelocity
 
 
