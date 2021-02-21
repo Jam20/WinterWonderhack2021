@@ -60,20 +60,8 @@ class GameManager:
                 self.balls = frame
                 self.updateScreen(False)
 
-            # Bot turn
-#            (velocity, angle) = bot.getAIMove(self.balls)
-#
-#            frames = engine.movingBall(velocity, angle, self.balls)
-#
-#            for frame in frames:
-#                for ball in frame:
-#                    ball.pos = (ball.pos[0] / engine.QUARDCONVERT, ball.pos[1] / engine.QUARDCONVERT)
-#
-#                self.balls = frame
-#                self.updateScreen(False)
 
-
-    pygame.quit()
+        pygame.quit()
 
     # Utiltiy that grabs the cue ball
     def getCue(self):
