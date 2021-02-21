@@ -52,7 +52,7 @@ class GameManager:
 
             for frame in frames:
                 self.balls = frame
-                print(self.balls[0].pos)
+                #print(self.balls[0].pos)
                 self.updateScreen(False)
 
 
