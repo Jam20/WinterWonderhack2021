@@ -1,7 +1,7 @@
 import math
 import random
-TIMESTEP = .01
-FRIC = -2500
+TIMESTEP = .001
+FRIC = -1000
 MAXVEL = 10000
 XDIMENTION = MAXVEL
 YDIMENTION = XDIMENTION/2
@@ -81,11 +81,15 @@ def movingBall(v,theta, boardState):
                         if dist<BALLRADIUS:
                             collided = True
                             cBall.theta = (math.degrees(math.atan2((ibY-currentPos[1]),(ibX-currentPos[0])))+360)%360
-                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*1, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*1)
-                            radiusincreae = 0
-                            while willCollide(ball,boardState):
-                                radiusincreae+=.1
-                                ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*radiusincreae, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*radiusincreae)
+                            currentPos[0],currentPos[1] = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*1, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*1)
+                            #radiusincrese = 0
+                            #while willCollide(currentPos[0],currentPos[1], ball,boardState) and radiusincrese<.5:
+                            #    testang = -10
+                            #    while willCollide(currentPos[0],currentPos[1], ball,boardState) and testang<10:
+                            #        currentPos[0],currentPos[1] = (cBall.pos[0]-math.cos(math.radians(cBall.theta+testang))*BALLRADIUS*radiusincrese, cBall.pos[1]-math.sin(math.radians(cBall.theta+testang))*BALLRADIUS*radiusincrese)
+                            #        testang+=.25
+                            #    radiusincrese+=.1
+
                             inVelMag = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
                             if theta>cBall.theta:
                                 newTheta = cBall.theta+90
@@ -115,12 +119,12 @@ def movingBall(v,theta, boardState):
         boardState = newBoardState
     return output
 
-def willCollide(ball, bs):
+def willCollide(x,y, ball, bs):
     for cBall in bs:
         if cBall != ball:
             ibX = cBall.pos[0]
             ibY = cBall.pos[1]
-            dist = math.sqrt(math.pow(ibX-ball.pos[0],2)+math.pow(ibY-ball.pos[1],2))
-            if dist<BALLRADIUS:
+            dist = math.sqrt(math.pow(ibX-x,2)+math.pow(ibY-y,2))
+            if dist<BALLRADIUS*1:
                 return True
     return False

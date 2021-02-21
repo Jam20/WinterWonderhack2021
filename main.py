@@ -50,15 +50,17 @@ class GameManager:
 
             # Player turn
             (velocity, angle, playerX, playerY) = self.getPlayer()
-
+            
             frames = engine.movingBall(velocity, angle, self.balls)
 
-            for frame in frames:
-                for ball in frame:
-                    ball.pos = (ball.pos[0] / engine.QUARDCONVERT, ball.pos[1] / engine.QUARDCONVERT)
+            for i in range(len(frames)):
+                if i%10 ==0:
+                    frame = frames[i]
+                    for ball in frame:
+                        ball.pos = (ball.pos[0] / engine.QUARDCONVERT, ball.pos[1] / engine.QUARDCONVERT)
 
-                self.balls = frame
-                self.updateScreen(False)
+                    self.balls = frame
+                    self.updateScreen(False)
 
         pygame.quit()
 

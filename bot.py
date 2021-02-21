@@ -6,23 +6,17 @@ team = 0
 boardState = []
 #return the touple containing the velocity and angle of the next AI move
 def getAIMove(bs):
-    boardState = bs
-    bestScore = 0
-    output = (0,0)
-
-    #loops through each pocket
-    for i in range(6):
-
-        #gets the paths possible for the pocket
-        paths = getPocketPaths(i)
-
-        #checks each path in the game simulation and chooses the path with the highest score
-        for path in paths:
-            score = getScore(path[0],path[1])
+    bestMove = 0,0
+    bestScore = -1
+    for i in range(500,10000):
+        for j in range (0, 360):
+            score = getScore(i,j, bs)
             if(score>bestScore):
-                output = (path[0],path[1])
+                bestScore = score
+                bestMove = i ,j
+    return bestMove
+            
 
-    return output
 
 
 
@@ -208,10 +202,10 @@ def getPaths(ball, traj):
     return paths
 
 #gets the score associated with a possible move from the engine simulation
-def getScore(v, theta):
+def getScore(v, theta, bs):
 
     #simulates the motion using the games physics engine
-    bs = engine.simulate(0, v, theta)
+    bs = engine.getMovingBalls(v, theta, bs)
     score = 0
     
     #loops through the all the balls in the final board state
