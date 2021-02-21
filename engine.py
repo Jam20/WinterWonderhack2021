@@ -35,7 +35,7 @@ def movingBall(v,theta, boardState):
         done = not foundVel
         newBoardState = []
         for ball in boardState:
-            if(ball.velocity>1):
+            if(ball.velocity!=0):
                 theta = ball.theta
                 initV = ball.velocity
                 pos = ball.pos
@@ -65,35 +65,44 @@ def movingBall(v,theta, boardState):
                     xVel = -xVel
                 if currentPos[1]-BALLRADIUS<=0 and yVel<0 or currentPos[1]+BALLRADIUS>=YDIMENTION and yVel>0 :
                     yVel = -yVel
-
+                velocity = 0
+                collided = False
+                newTheta = 0
+                deleteBall = False
                 for cBall in boardState:
                     if cBall != ball:
                         ibX = cBall.pos[0]
                         ibY = cBall.pos[1]
                         dist = math.sqrt(math.pow(ibX-currentPos[0],2)+math.pow(ibY-currentPos[1],2))
+                        if(cBall.id <0 and dist<BALLRADIUS*2):
+                            deleteBall = True
+                            break
                         if dist<BALLRADIUS:
-                            cBall.theta = math.degrees(math.atan2((ibY-currentPos[1]),(ibX-currentPos[0])))
-                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS)
-                            adjTheta=0
+                            collided = True
+                            cBall.theta = (math.degrees(math.atan2((ibY-currentPos[1]),(ibX-currentPos[0])))+360)%360
+                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*1.5, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*1.5)
                             inVelMag = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
                             if theta>cBall.theta:
                                 newTheta = cBall.theta+90
-                                adjTheta = cBall.theta-90
-                                cBall.velocity = inVelMag*math.sin(math.degrees(adjTheta))
-                                ball.velocity = inVelMag*math.cos(math.degrees(adjTheta))
+                                velocity = abs(inVelMag*math.sin(math.degrees(theta-cBall.theta)))
+                                cBall.velocity = abs(inVelMag*math.cos(math.degrees(theta-cBall.theta)))
                             elif theta == cBall.theta:
                                 cBall.velocity  = inVelMag
                                 ball.velocity   = 0
                                 newTheta = theta
                             else:
                                 newTheta = cBall.theta-90
-                                adjTheta = newTheta-90
-                                ball.velocity = inVelMag*math.sin(math.degrees(adjTheta))
-                                cBall.velocity = inVelMag*math.cos(math.degrees(adjTheta))
-                velocity = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
-                velocity= velocity+FRIC*TIMESTEP
-                newBall = Ball(ball.id,currentPos[0],currentPos[1],ball.color,ball.isStriped, velocity, math.degrees(math.atan2(yVel,xVel)))
-                newBoardState.append(newBall)
+                                velocity = abs(inVelMag*math.sin(math.degrees(theta+(cBall.theta))))
+                                cBall.velocity = abs(inVelMag*math.cos(math.degrees(theta+(cBall.theta))))
+                if not deleteBall:
+                    if not collided:
+                        velocity = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
+                        angle = math.degrees(math.atan2(yVel,xVel))
+                    else:
+                        angle = newTheta
+                    velocity= velocity+FRIC*TIMESTEP
+                    newBall = Ball(ball.id,currentPos[0],currentPos[1],ball.color,ball.isStriped, velocity, (angle)+360%360)
+                    newBoardState.append(newBall)
             else:
                 newBall = Ball(ball.id,ball.pos[0],ball.pos[1],ball.color,ball.isStriped,ball.velocity,ball.theta)
                 newBoardState.append(newBall)
@@ -101,9 +110,8 @@ def movingBall(v,theta, boardState):
         boardState = newBoardState
     return output
 
- 
 
-
+def seperate(ball, bs):
             
 
         
