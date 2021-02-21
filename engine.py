@@ -1,5 +1,4 @@
 import math
-import vector
 TIMESTEP = .01
 FRIC = -2500
 MAXVEL = 10000
