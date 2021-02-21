@@ -1,4 +1,5 @@
 import math
+import random
 TIMESTEP = .01
 FRIC = -2500
 MAXVEL = 10000
@@ -80,7 +81,11 @@ def movingBall(v,theta, boardState):
                         if dist<BALLRADIUS:
                             collided = True
                             cBall.theta = (math.degrees(math.atan2((ibY-currentPos[1]),(ibX-currentPos[0])))+360)%360
-                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*1.5, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*1.5)
+                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*1, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*1)
+                            radiusincreae = 0
+                            while willCollide(ball,boardState):
+                                radiusincreae+=.1
+                                ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS*radiusincreae, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS*radiusincreae)
                             inVelMag = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
                             if theta>cBall.theta:
                                 newTheta = cBall.theta+90
@@ -110,9 +115,12 @@ def movingBall(v,theta, boardState):
         boardState = newBoardState
     return output
 
-
-def seperate(ball, bs):
-            
-
-        
-        
+def willCollide(ball, bs):
+    for cBall in bs:
+        if cBall != ball:
+            ibX = cBall.pos[0]
+            ibY = cBall.pos[1]
+            dist = math.sqrt(math.pow(ibX-ball.pos[0],2)+math.pow(ibY-ball.pos[1],2))
+            if dist<BALLRADIUS:
+                return True
+    return False
