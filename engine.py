@@ -8,7 +8,7 @@ BALLRADIUS = 2.25/44*YDIMENTION
 QUARDCONVERT = 113.636
 
 class Ball:
-    def __init__(self, id, x, y, color, isStriped, velocity=0, theta=0):
+    def __init__(self, id, x, y, color = (0,0,0), isStriped = False, velocity=0, theta=0):
         self.id = id # Ball number (0 = Q)
         self.pos = (x, y)
         self.color = color # RGB values
@@ -33,6 +33,7 @@ def movingBall(v,theta, boardState):
                 totalVel += ball.velocity
                 foundVel = True
         done = not foundVel
+        newBoardState = []
         for ball in boardState:
             if(ball.velocity!=0):
                 theta = ball.theta
@@ -89,12 +90,11 @@ def movingBall(v,theta, boardState):
                                 adjTheta = newTheta-90
                                 ball.velocity = inVelMag*math.sin(math.degrees(adjTheta))
                                 cBall.velocity = inVelMag*math.cos(math.degrees(adjTheta))
-
-                ball.pos = (currentPos[0],currentPos[1])
-                ball.velocity = ball.velocity+FRIC*TIMESTEP
-                ball.theta = math.degrees(math.atan2(yVel,xVel))
-        outState = boardState
-        output.append(outState)
+                                
+                newBall = Ball(ball.id,currentPos[0],currentPos[1],ball.color,ball.isStriped, ball.velocity+FRIC*TIMESTEP, math.degrees(math.atan2(yVel,xVel)))
+                newBoardState.append(newBall)
+        output.append(newBoardState)
+        boardState = newBoardState
     for ball in boardState:
         ball.theta = 0
         ball.velocity = 0
