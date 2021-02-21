@@ -1,5 +1,5 @@
 import math
-
+import vector
 TIMESTEP = .01
 FRIC = -2500
 MAXVEL = 10000
@@ -33,7 +33,6 @@ def movingBall(v,theta, boardState):
             if ball.velocity>0:
                 totalVel += ball.velocity
                 foundVel = True
-        print(f"Total velocity is {totalVel}")
         done = not foundVel
         for ball in boardState:
             if(ball.velocity!=0):
@@ -95,7 +94,8 @@ def movingBall(v,theta, boardState):
                 ball.pos = (currentPos[0],currentPos[1])
                 ball.velocity = ball.velocity+FRIC*TIMESTEP
                 ball.theta = math.degrees(math.atan2(yVel,xVel))
-        output.append(boardState)
+        outState = boardState
+        output.append(outState)
     for ball in boardState:
         ball.theta = 0
         ball.velocity = 0
@@ -104,7 +104,7 @@ def movingBall(v,theta, boardState):
 
  
 
-        
+
             
 
         
