@@ -1,3 +1,6 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 import pygame
 import random
 from screeninfo import get_monitors
@@ -45,6 +48,7 @@ class GameManager:
                 if event.type == pygame.QUIT:
                     exit()
 
+            # Player turn
             (velocity, angle, playerX, playerY) = self.getPlayer()
 
             frames = engine.movingBall(velocity, angle, self.balls)
@@ -56,8 +60,7 @@ class GameManager:
                 self.balls = frame
                 self.updateScreen(False)
 
-
-    pygame.quit()
+        pygame.quit()
 
     # Utiltiy that grabs the cue ball
     def getCue(self):
@@ -270,6 +273,16 @@ class GameManager:
             temp = Ball(param[0], param[1], param[2], param[3], param[4])
             self.balls.append(temp)
 
+        cornerPockets = (4.5 * self.pixelInch) // 2
+        centerPockets = (5 * self.pixelInch) // 2
+        pockets = [(0, 44, cornerPockets), (44, 44, centerPockets), 
+                (88, 44, cornerPockets), (0, 0, cornerPockets), 
+                (44, 0, centerPockets), (88, 0, cornerPockets)] 
+
+        for pocket in pockets:
+            temp = Ball(-1, pocket[0], pocket[1], (0,0,0), False, 0, 0)
+            self.balls.append(temp)
+
     # Updates the screen
     def updateScreen(self, isPlayer):
         for event in pygame.event.get():
@@ -315,32 +328,32 @@ class GameManager:
 
     # Made seperate to call for drawing balls and pockets
     def drawBall(self, ball, radius):
+        if(ball.id >= 0):
+            x = self.xToPixel(ball.pos[0])
+            y = self.yToPixel(ball.pos[1])
 
-        x = self.xToPixel(ball.pos[0])
-        y = self.yToPixel(ball.pos[1])
+            pygame.draw.circle(self.screen, ball.color, (x, int(y)), int(radius))
+            
+            # If it is a numbered ball
+            if(ball.id > 0):
+                # For circle for solids
+                if not ball.isStriped:
+                    pygame.draw.circle(self.screen, (255,255,255), (x, int(y)), int(radius / 2))
 
-        pygame.draw.circle(self.screen, ball.color, (x, int(y)), int(radius))
-        
-        # If it is a numbered ball
-        if(ball.id > 0):
-            # For circle for solids
-            if not ball.isStriped:
-                pygame.draw.circle(self.screen, (255,255,255), (x, int(y)), int(radius / 2))
-
-            # Draw crappy striped
-            else:
-                pygame.draw.rect(self.screen, (255, 255, 255), (int(x - radius * 0.70), 
-                    int(y - radius / 2), int(radius * 1.6), int(radius)))
+                # Draw crappy striped
+                else:
+                    pygame.draw.rect(self.screen, (255, 255, 255), (int(x - radius * 0.70), 
+                        int(y - radius / 2), int(radius * 1.6), int(radius)))
 
 
-        # Draw number on ball
-        text = self.myfont.render(f"{ball.id}", False, (0, 0, 0))
+            # Draw number on ball
+            text = self.myfont.render(f"{ball.id}", False, (0, 0, 0))
 
-        textXOffset = text.get_width() // 2
-        textYOffset = text.get_height() // 2
+            textXOffset = text.get_width() // 2
+            textYOffset = text.get_height() // 2
 
-        if(ball.id > 0):
-            self.screen.blit(text, (x - textXOffset, int(y - textYOffset)))
+            if(ball.id > 0):
+                self.screen.blit(text, (x - textXOffset, int(y - textYOffset)))
 
 class PoolStick:
     def __init__(self):
