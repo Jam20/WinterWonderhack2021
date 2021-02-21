@@ -1,10 +1,12 @@
 import pygame
 import random
-import os
 from screeninfo import get_monitors
+import math
+import time
 
 import bot
 from engine import Ball
+import engine
 
 class GameManager:
     # Constructor
@@ -12,17 +14,18 @@ class GameManager:
         mnum = 1 if len(get_monitors()) > 1 else 0
         self.pixelInch = int((get_monitors()[mnum].width / 100))
         self.bumper = 6 * self.pixelInch
-        self.boardWidth = self.pixelInch * 88;
-        self.boardHeight = self.pixelInch * 44;
+        self.boardWidth = self.pixelInch * 88
+        self.boardHeight = self.pixelInch * 44
         self.screenWidth = self.boardWidth + self.bumper
         self.screenHeight = self.boardHeight + self.bumper
-        self.ballRadius = 1.125 * self.pixelInch;
+        self.ballRadius = 1.125 * self.pixelInch
 
-        self.maxVel = 5     # The max velocity in inches/second
+        self.maxVel = 10000     # The max velocity in inches/second
         self.maxDraw = 22   # The max distance you can pull the poolstick back (in)
 
         self.screen = pygame.display.set_mode([self.screenWidth, self.screenHeight])
         self.clock = pygame.time.Clock()
+        self.poolStick = PoolStick()
 
         self.balls = []
 
@@ -34,7 +37,7 @@ class GameManager:
 
     # Game loop
     def run(self):
-        run = True;
+        run = True
 
         self.initBalls()
 
@@ -43,15 +46,21 @@ class GameManager:
                 if event.type == pygame.QUIT:
                     run = False
 
-            self.getPlayer()
+            (velocity, angle, playerX, playerY) = self.getPlayer()
 
-            run = False
+            self.strike(playerX, playerY, angle)
+
+            frames = engine.movingBall(velocity, angle, self.balls)
+
+            for frame in frames:
+                self.balls = frame
+                self.drawBalls()
 
             self.updateScreen(False)
 
     pygame.quit()
 
-    # Utiltiy that grabs the cue ball and the possibility of a scratch
+    # Utiltiy that grabs the cue ball
     def getCue(self):
         for ball in self.balls:
             if ball.id == 0:
@@ -65,17 +74,57 @@ class GameManager:
     def yToPixel(self, distance):
         return self.screenHeight - (distance * self.pixelInch) - ((self.screenHeight - self.boardHeight) // 2)
 
+    # Animation to strike ball
+    def strike(self, playerX, playerY, angle):
+        (cueX, cueY) = self.getCue().pos
+
+        cueX = self.xToPixel(cueX)
+        cueY = self.yToPixel(cueY)
+
+        deltaX = int((playerX - cueX) // 10)
+        deltaY = int((cueY - playerY) // 10)
+
+        for i in range(10):
+            self.screen.fill((255, 255, 255))
+            self.drawTable()
+            self.drawBalls()
+        
+            poolStickWidth = self.poolStick.rotCenter(angle).get_width()
+            poolStickheight = self.poolStick.rotCenter(angle).get_height()
+
+            if (0 <= angle and angle < 90):
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                        (playerX - poolStickWidth, playerY))
+
+            elif (90 <= angle < 180):
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                        (playerX - deltaX, playerY))
+
+            elif (180 <= angle < 270):
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                        (playerX, playerY - poolStickheight + deltaY))
+
+            else:
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                       (playerX - poolStickWidth, playerY - poolStickheight))
+
+            pygame.display.flip()
+
+            playerX = playerX - deltaX
+            playerY = playerY + deltaY
+
+
     # Gets the players input
     # Returns velocity and angle
     def getPlayer(self):
         hasGone = False
 
         while not hasGone:
+            hasGone = pygame.mouse.get_pressed()[0]
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    bashGone = True
-
-            hasGone = pygame.mouse.get_pressed()[0]
+                    hasGone = True
 
             # If the player has gone, calculate angle and velocity
             if(hasGone):
@@ -85,12 +134,14 @@ class GameManager:
                 cueX = self.xToPixel(cueX)
                 cueY = self.yToPixel(cueY)
 
-                # Calc Distance
+                # Calc Distance and velocity
                 distance =  self.getDistance(playerX, playerY, cueX, cueY)
                 velocity = self.maxVel * (distance / (self.maxDraw * self.pixelInch))
 
                 # Calc Angle
                 angle = self.getAngle(playerX, playerY)
+
+                return (round(velocity, 3), angle, playerX, playerY)
 
             self.updateScreen(True)
 
@@ -102,7 +153,35 @@ class GameManager:
         cueX = self.xToPixel(cueX)
         cueY = self.yToPixel(cueY)
 
-        pygame.draw.line(self.screen, (255,25,22), (playerX, playerY), (cueX, cueY), 3)
+        # Referenc line from ball to tip of pool stick
+        pygame.draw.line(self.screen, (0, 0, 0), (playerX, playerY), (cueX, cueY), 3)
+
+        # Line used to aim
+        playerXOpp = int(cueX - (playerX - cueX)) 
+        playerYOpp = int(cueY - (playerY - cueY))
+        pygame.draw.line(self.screen, (0, 0, 0), (cueX, cueY), (playerXOpp, playerYOpp), 3)
+        
+        # Place the CuestickAt the mouse
+        angle = int(self.getAngle(playerX, playerY))
+
+        poolStickWidth = self.poolStick.rotCenter(angle).get_width()
+        poolStickheight = self.poolStick.rotCenter(angle).get_height()
+        
+        if (0 <= angle and angle < 90):
+            self.screen.blit(self.poolStick.rotCenter(angle), 
+                    (playerX - poolStickWidth, playerY))
+
+        elif (90 <= angle < 180):
+            self.screen.blit(self.poolStick.rotCenter(angle), 
+                    (playerX, playerY))
+
+        elif (180 <= angle < 270):
+            self.screen.blit(self.poolStick.rotCenter(angle), 
+                    (playerX, playerY - poolStickheight))
+
+        else:
+            self.screen.blit(self.poolStick.rotCenter(angle), 
+                    (playerX - poolStickWidth, playerY - poolStickheight))
 
     # Get distance between two points
     # Will restrict distance if it is past maxDraw, useful for mapping force 
@@ -125,38 +204,67 @@ class GameManager:
         cueX = self.xToPixel(cueX)
         cueY = self.yToPixel(cueY)
 
-        angle = None
+        angle = 0
 
         # Check if the user x or y is equal with cue x or y
         # If x similar
         if (cueX == userX):
-            pass
+            if (cueY < userY):
+                angle = 270
+            else:
+                angle = 90
 
         # If y similar
         elif (cueY == userY):
-            pass
+            if (cueX > userX):
+                angle = 180
+            else:
+                angle = 0
 
-        print(angle)
-        return angle
+        # Check for Quadrant 1
+        elif (cueX < userX and cueY > userY):
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+
+        # Check for Quadrant 2
+        elif (cueX > userX and cueY > userY):
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+            angle = 90 + (90 - angle)
+
+        # Check for Quadrant 3
+        elif (cueX > userX and cueY < userY):
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+            angle = angle + 180
+
+        # Check for Quadrant 4
+        else:
+            angle = math.atan(abs(userY - cueY)/abs(userX - cueX))
+            angle = angle * (180 / math.pi)
+            angle = 270 + (90 - angle)
+
+        # Have to add 180 degrees to reverse direction
+        return round((angle + 180) % 360, 3)
 
     # Sets the balls
     def initBalls(self):
         # (id, color, isStriped)
         ballparams = [(0,  66, 22,    (255, 255, 255), False),  # Cue Ball
-                      (1,  22, 22,    (242, 230, 0),   False),
-                      (2,  20, 23.15, (12, 23, 237),   False), 
-                      (3,  20, 20.85, (212, 26, 13),   False), 
-                      (4,  18, 24.3,  (117, 33, 219),  False), 
-                      (5,  18, 22,    (242, 149, 0),   False), 
-                      (6,  18, 19.7,  (27, 117, 2),    False), 
-                      (7,  16, 25.45, (179, 30, 70),   False), 
-                      (8,  16, 23.15, (0, 0, 0),       False), 
-                      (9,  16, 20.85, (242, 230, 0),   True), 
-                      (10, 16, 18.55, (12, 23, 237),   True), 
-                      (11, 14, 26.6,  (212, 26, 13),   True), 
-                      (12, 14, 24.3,  (117, 33, 219),  True), 
-                      (13, 14, 22,    (242, 149, 0),   True), 
-                      (14, 14, 19.7,  (27, 117, 2),    True), 
+                     # (1,  22, 22,    (242, 230, 0),   False),
+                     # (2,  20, 23.15, (12, 23, 237),   False), 
+                     # (3,  20, 20.85, (212, 26, 13),   False), 
+                     # (4,  18, 24.3,  (117, 33, 219),  False), 
+                     # (5,  18, 22,    (242, 149, 0),   False), 
+                     # (6,  18, 19.7,  (27, 117, 2),    False), 
+                     # (7,  16, 25.45, (179, 30, 70),   False), 
+                     # (8,  16, 23.15, (0, 0, 0),       False), 
+                     # (9,  16, 20.85, (242, 230, 0),   True), 
+                     # (10, 16, 18.55, (12, 23, 237),   True), 
+                     # (11, 14, 26.6,  (212, 26, 13),   True), 
+                     # (12, 14, 24.3,  (117, 33, 219),  True), 
+                     # (13, 14, 22,    (242, 149, 0),   True), 
+                     # (14, 14, 19.7,  (27, 117, 2),    True), 
                       (15, 14, 17.4,  (179, 30, 70),   True)]
 
         for param in ballparams:
@@ -208,18 +316,18 @@ class GameManager:
         x = self.xToPixel(ball.pos[0])
         y = self.yToPixel(ball.pos[1])
 
-        pygame.draw.circle(self.screen, ball.color, (x, y), radius)
+        pygame.draw.circle(self.screen, ball.color, (x, int(y)), int(radius))
         
         # If it is a numbered ball
         if(ball.id > 0):
             # For circle for solids
             if not ball.isStriped:
-                pygame.draw.circle(self.screen, (255,255,255), (x, y), radius / 2)
+                pygame.draw.circle(self.screen, (255,255,255), (x, int(y)), int(radius / 2))
 
             # Draw crappy striped
             else:
-                pygame.draw.rect(self.screen, (255, 255, 255), (x - radius * 0.70, 
-                    y - radius / 2, radius * 1.6, radius))
+                pygame.draw.rect(self.screen, (255, 255, 255), (int(x - radius * 0.70), 
+                    int(y - radius / 2), int(radius * 1.6), int(radius)))
 
 
         # Draw number on ball
@@ -228,7 +336,23 @@ class GameManager:
         textXOffset = text.get_width() // 2
         textYOffset = text.get_height() // 2
 
-        self.screen.blit(text, (x - textXOffset, y - textYOffset))
+        self.screen.blit(text, (x - textXOffset, int(y - textYOffset)))
+
+class PoolStick:
+    def __init__(self):
+        self.image = pygame.image.load("poolCue.png")
+    
+    def getWidth(self):
+        return self.image.get_width()
+
+    def getHeight(self):
+        return self.image.get_height()
+
+    def getImage(self):
+        return pygame.transform.scale(self.image, (self.getWidth() * 2, self.getHeight() * 2))
+
+    def rotCenter(self, angle):
+        return pygame.transform.rotozoom(self.getImage(), angle, 1)
 
 
 if __name__ == "__main__":
