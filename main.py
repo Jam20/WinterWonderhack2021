@@ -1,3 +1,6 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 import pygame
 import random
 from screeninfo import get_monitors
@@ -45,6 +48,7 @@ class GameManager:
                 if event.type == pygame.QUIT:
                     exit()
 
+            # Player turn
             (velocity, angle, playerX, playerY) = self.getPlayer()
 
             frames = engine.movingBall(velocity, angle, self.balls)
@@ -55,6 +59,18 @@ class GameManager:
 
                 self.balls = frame
                 self.updateScreen(False)
+
+            # Bot turn
+#            (velocity, angle) = bot.getAIMove(self.balls)
+#
+#            frames = engine.movingBall(velocity, angle, self.balls)
+#
+#            for frame in frames:
+#                for ball in frame:
+#                    ball.pos = (ball.pos[0] / engine.QUARDCONVERT, ball.pos[1] / engine.QUARDCONVERT)
+#
+#                self.balls = frame
+#                self.updateScreen(False)
 
 
     pygame.quit()
