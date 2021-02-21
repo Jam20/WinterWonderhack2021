@@ -12,11 +12,11 @@ class GameManager:
         mnum = 1 if len(get_monitors()) > 1 else 0
         self.pixelInch = int((get_monitors()[mnum].width / 100))
         self.bumper = 6 * self.pixelInch
-        self.boardWidth = self.pixelInch * 88;
-        self.boardHeight = self.pixelInch * 44;
+        self.boardWidth = self.pixelInch * 88
+        self.boardHeight = self.pixelInch * 44
         self.screenWidth = self.boardWidth + self.bumper
         self.screenHeight = self.boardHeight + self.bumper
-        self.ballRadius = 1.125 * self.pixelInch;
+        self.ballRadius = 1.125 * self.pixelInch
 
         self.maxVel = 10     # The max velocity in inches/second
         self.maxDraw = 22   # The max distance you can pull the poolstick back (in)
@@ -35,7 +35,7 @@ class GameManager:
 
     # Game loop
     def run(self):
-        run = True;
+        run = True
 
         self.initBalls()
 
@@ -44,11 +44,13 @@ class GameManager:
                 if event.type == pygame.QUIT:
                     run = False
 
-            self.getPlayer()
+            (velocity, angle, playerX, playerY) = self.getPlayer()
 
-            run = False
+            self.strike(playerX, playerY, angle)
 
             self.updateScreen(False)
+
+
 
     pygame.quit()
 
@@ -65,6 +67,46 @@ class GameManager:
     # Convert y board coordinate to pixel coordinate
     def yToPixel(self, distance):
         return self.screenHeight - (distance * self.pixelInch) - ((self.screenHeight - self.boardHeight) // 2)
+
+    # Animation to strike ball
+    def strike(self, playerX, playerY, angle):
+        (cueX, cueY) = self.getCue().pos
+
+        cueX = self.xToPixel(cueX)
+        cueY = self.yToPixel(cueY)
+
+        deltaX = int((playerX - cueX) // 20)
+        deltaY = int((cueY - playerY) // 20)
+
+        for i in range(20):
+            self.screen.fill((255, 255, 255))
+            self.drawTable()
+            self.drawBalls()
+        
+            poolStickWidth = self.poolStick.rotCenter(angle).get_width()
+            poolStickheight = self.poolStick.rotCenter(angle).get_height()
+
+            if (0 <= angle and angle < 90):
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                        (playerX - poolStickWidth, playerY))
+
+            elif (90 <= angle < 180):
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                        (playerX - deltaX, playerY))
+
+            elif (180 <= angle < 270):
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                        (playerX, playerY - poolStickheight + deltaY))
+
+            else:
+                self.screen.blit(self.poolStick.rotCenter(angle), 
+                       (playerX - poolStickWidth, playerY - poolStickheight))
+
+            pygame.display.flip()
+
+            playerX = playerX - deltaX
+            playerY = playerY + deltaY
+
 
     # Gets the players input
     # Returns velocity and angle
@@ -94,6 +136,8 @@ class GameManager:
 
                 # Calc Angle
                 angle = self.getAngle(playerX, playerY)
+
+                return (velocity, angle, playerX, playerY)
 
             self.updateScreen(True)
 
