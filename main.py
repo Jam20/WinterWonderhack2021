@@ -51,8 +51,8 @@ class GameManager:
             frames = engine.movingBall(velocity, angle, self.balls)
 
             for frame in frames:
-                print(self.balls[0].pos)
                 self.balls = frame
+                print(self.balls[1].pos)
                 self.updateScreen(False)
 
 
