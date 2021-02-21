@@ -24,12 +24,15 @@ def movingBall(v,theta, boardState):
             ball.velocity = v
             ball.theta = theta
     
-    done = v==0
+    done = bool(v==0)
     while not done:
         foundVel= False
+        totalVel = 0
         for ball in boardState:
             if ball.velocity>0:
+                totalVel += ball.velocity
                 foundVel = True
+        print(f"Total velocity is {totalVel}")
         done = not foundVel
         for ball in boardState:
             if(ball.velocity!=0):
