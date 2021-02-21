@@ -95,10 +95,10 @@ def movingBall(v,theta, boardState):
                 newBoardState.append(newBall)
         output.append(newBoardState)
         boardState = newBoardState
-    for ball in boardState:
-        ball.theta = 0
-        ball.velocity = 0
-        ball.pos = (ball.pos[0]/QUARDCONVERT, ball.pos[1]/QUARDCONVERT)
+        for ball in boardState:
+            ball.theta = 0
+            ball.velocity = 0
+            ball.pos = (ball.pos[0]/QUARDCONVERT, ball.pos[1]/QUARDCONVERT)
     return output
 
  
