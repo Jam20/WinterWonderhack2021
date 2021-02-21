@@ -28,6 +28,7 @@ class GameManager:
         self.poolStick = PoolStick()
 
         self.balls = []
+        self.run = True
 
         # Init pygame
         pygame.init()
@@ -36,15 +37,13 @@ class GameManager:
         pygame.display.set_caption("Amazing Pool Bot")
 
     # Game loop
-    def run(self):
-        run = True
-
+    def runGame(self):
         self.initBalls()
 
-        while run:
+        while self.run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False
+                    exit()
 
             (velocity, angle, playerX, playerY) = self.getPlayer()
 
@@ -124,7 +123,7 @@ class GameManager:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    hasGone = True
+                    exit()
 
             # If the player has gone, calculate angle and velocity
             if(hasGone):
@@ -273,6 +272,10 @@ class GameManager:
 
     # Updates the screen
     def updateScreen(self, isPlayer):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+
         self.screen.fill((255, 255, 255))
         self.drawTable()
         self.drawBalls()
@@ -358,7 +361,7 @@ class PoolStick:
 
 if __name__ == "__main__":
     game = GameManager()
-    game.run()
+    game.runGame()
 
 
 
