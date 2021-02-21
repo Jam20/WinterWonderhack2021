@@ -141,7 +141,7 @@ class GameManager:
                 # Calc Angle
                 angle = self.getAngle(playerX, playerY)
 
-                return temp = (round(velocity, 3), angle, playerX, playerY)
+                return (round(velocity, 3), angle, playerX, playerY)
 
             self.updateScreen(True)
 
