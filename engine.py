@@ -93,6 +93,9 @@ def movingBall(v,theta, boardState):
                                 
                 newBall = Ball(ball.id,currentPos[0],currentPos[1],ball.color,ball.isStriped, ball.velocity+FRIC*TIMESTEP, math.degrees(math.atan2(yVel,xVel)))
                 newBoardState.append(newBall)
+            else:
+                newBall = Ball(ball.id,ball.pos[0],ball.pos[1],ball.color,ball.isStriped,ball.velocity,ball.theta)
+                newBoardState.append(newBall)
         output.append(newBoardState)
         boardState = newBoardState
         for ball in boardState:
