@@ -6,6 +6,7 @@ import time
 
 import bot
 from engine import Ball
+import engine
 
 class GameManager:
     # Constructor
@@ -47,13 +48,13 @@ class GameManager:
 
             (velocity, angle, playerX, playerY) = self.getPlayer()
 
+            frames = engine.movingBall(velocity, angle, self.balls)
+
+            print(frames)
+
             self.strike(playerX, playerY, angle)
 
             self.updateScreen(False)
-
-            time.sleep(2)
-
-
 
     pygame.quit()
 
