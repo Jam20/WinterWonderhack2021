@@ -20,7 +20,7 @@ class GameManager:
         self.screenHeight = self.boardHeight + self.bumper
         self.ballRadius = 1.125 * self.pixelInch
 
-        self.maxVel = 10     # The max velocity in inches/second
+        self.maxVel = 10000     # The max velocity in inches/second
         self.maxDraw = 22   # The max distance you can pull the poolstick back (in)
 
         self.screen = pygame.display.set_mode([self.screenWidth, self.screenHeight])
@@ -48,11 +48,13 @@ class GameManager:
 
             (velocity, angle, playerX, playerY) = self.getPlayer()
 
+            self.strike(playerX, playerY, angle)
+
             frames = engine.movingBall(velocity, angle, self.balls)
 
-            print(frames)
-
-            self.strike(playerX, playerY, angle)
+            for frame in frames:
+                self.balls = frame
+                self.drawBalls()
 
             self.updateScreen(False)
 
@@ -135,8 +137,6 @@ class GameManager:
                 # Calc Distance and velocity
                 distance =  self.getDistance(playerX, playerY, cueX, cueY)
                 velocity = self.maxVel * (distance / (self.maxDraw * self.pixelInch))
-                if (velocity < 0.5):
-                    velocity = 0.5
 
                 # Calc Angle
                 angle = self.getAngle(playerX, playerY)
@@ -251,20 +251,20 @@ class GameManager:
     def initBalls(self):
         # (id, color, isStriped)
         ballparams = [(0,  66, 22,    (255, 255, 255), False),  # Cue Ball
-                      (1,  22, 22,    (242, 230, 0),   False),
-                      (2,  20, 23.15, (12, 23, 237),   False), 
-                      (3,  20, 20.85, (212, 26, 13),   False), 
-                      (4,  18, 24.3,  (117, 33, 219),  False), 
-                      (5,  18, 22,    (242, 149, 0),   False), 
-                      (6,  18, 19.7,  (27, 117, 2),    False), 
-                      (7,  16, 25.45, (179, 30, 70),   False), 
-                      (8,  16, 23.15, (0, 0, 0),       False), 
-                      (9,  16, 20.85, (242, 230, 0),   True), 
-                      (10, 16, 18.55, (12, 23, 237),   True), 
-                      (11, 14, 26.6,  (212, 26, 13),   True), 
-                      (12, 14, 24.3,  (117, 33, 219),  True), 
-                      (13, 14, 22,    (242, 149, 0),   True), 
-                      (14, 14, 19.7,  (27, 117, 2),    True), 
+                     # (1,  22, 22,    (242, 230, 0),   False),
+                     # (2,  20, 23.15, (12, 23, 237),   False), 
+                     # (3,  20, 20.85, (212, 26, 13),   False), 
+                     # (4,  18, 24.3,  (117, 33, 219),  False), 
+                     # (5,  18, 22,    (242, 149, 0),   False), 
+                     # (6,  18, 19.7,  (27, 117, 2),    False), 
+                     # (7,  16, 25.45, (179, 30, 70),   False), 
+                     # (8,  16, 23.15, (0, 0, 0),       False), 
+                     # (9,  16, 20.85, (242, 230, 0),   True), 
+                     # (10, 16, 18.55, (12, 23, 237),   True), 
+                     # (11, 14, 26.6,  (212, 26, 13),   True), 
+                     # (12, 14, 24.3,  (117, 33, 219),  True), 
+                     # (13, 14, 22,    (242, 149, 0),   True), 
+                     # (14, 14, 19.7,  (27, 117, 2),    True), 
                       (15, 14, 17.4,  (179, 30, 70),   True)]
 
         for param in ballparams:
@@ -353,6 +353,7 @@ class PoolStick:
 
     def rotCenter(self, angle):
         return pygame.transform.rotozoom(self.getImage(), angle, 1)
+
 
 if __name__ == "__main__":
     game = GameManager()
