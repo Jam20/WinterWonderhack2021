@@ -47,6 +47,7 @@ class GameManager:
                     run = False
 
             (velocity, angle, playerX, playerY) = self.getPlayer()
+            print(velocity, angle)
 
             frames = engine.movingBall(velocity, angle, self.balls)
 
