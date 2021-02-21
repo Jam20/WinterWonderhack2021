@@ -4,7 +4,7 @@ FRIC = -2500
 MAXVEL = 10000
 XDIMENTION = MAXVEL
 YDIMENTION = XDIMENTION/2
-BALLRADIUS = 2.25/44*YDIMENTION
+BALLRADIUS = 113.636*2.1
 QUARDCONVERT = 113.636
 
 class Ball:
@@ -35,7 +35,7 @@ def movingBall(v,theta, boardState):
         done = not foundVel
         newBoardState = []
         for ball in boardState:
-            if(ball.velocity!=0):
+            if(ball.velocity>1):
                 theta = ball.theta
                 initV = ball.velocity
                 pos = ball.pos
@@ -71,9 +71,9 @@ def movingBall(v,theta, boardState):
                         ibX = cBall.pos[0]
                         ibY = cBall.pos[1]
                         dist = math.sqrt(math.pow(ibX-currentPos[0],2)+math.pow(ibY-currentPos[1],2))
-                        if dist<2*BALLRADIUS:
+                        if dist<BALLRADIUS:
                             cBall.theta = math.degrees(math.atan2((ibY-currentPos[1]),(ibX-currentPos[0])))
-                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*2*BALLRADIUS, cBall.pos[1]-math.sin(math.radians(cBall.theta))*2*BALLRADIUS)
+                            ball.pos = (cBall.pos[0]-math.cos(math.radians(cBall.theta))*BALLRADIUS, cBall.pos[1]-math.sin(math.radians(cBall.theta))*BALLRADIUS)
                             adjTheta=0
                             inVelMag = math.sqrt(math.pow(xVel,2)+math.pow(yVel,2))
                             if theta>cBall.theta:
