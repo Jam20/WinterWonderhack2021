@@ -8,6 +8,9 @@ class UIBall(enginev2.Ball):
     def __init__(self, id, pos, vel, number):
         enginev2.Ball.__init__(self, pos, vel)
         self.number = number
+        self.isStripped = number>8
+        self.isCue = number == 0
+        self.isPocketed = False
 
 
 mnum = 1 if len(get_monitors()) > 1 else 0
@@ -79,5 +82,6 @@ def render(balls):
     screen.fill((0, 0, 0))
     drawTable()
     drawBalls(balls)
+    pygame.draw.circle(screen, (255,0,0), (80*cmToPixels+boardThickness,5*cmToPixels+boardThickness), 1*cmToPixels)
     pygame.display.flip()
 

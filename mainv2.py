@@ -1,5 +1,4 @@
 import game
 mainState = game.GameState()
 
-while(True):
-    game.runTurn(mainState, (0,-6))
+game.runTurn(mainState, (100,0))

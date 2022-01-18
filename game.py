@@ -1,21 +1,14 @@
+import copy
 from screeninfo import get_monitors
 import ui
 from ui import UIBall
 import enginev2
 
-class GameBall(ui.UIBall):
-    def __init__(self, id, pos, vel, number):
-        super().__init__(id, pos, vel, number)
-        self.isStripped = number>8
-        self.isCue = number == 0
-        self.isPocketed = False
-
 class GameState:
-    def __init__(self):
+       def __init__(self):
         constRad = enginev2.Ball((0, 0), (0, 0)).radius
         self.balls = [
-            #UIBall(0, (85, 64), (0, 0), 0),
-            UIBall(0, (0, 0), (0, 0), 0),
+            UIBall(0, (85, 64), (0, 0), 0),
 
             UIBall(1, (170, 64), (0, 0), 1),
 
@@ -47,10 +40,46 @@ class GameState:
             UIBall(12, (170 + constRad * 8, 64 + constRad * 4),
                    (0, 0), 15),
         ]
+       def printState(self):
+              print('Ball Information:', flush=True)
+              for ball in self.balls:
+                     print('Ball ', str(ball.number), ': Pos ', str(ball.pos), ", Vel ", str(ball.vel))
 
 def runTurn(state, cueVel):
     for ball in state.balls:
-        if(ball.number == 0):
+        if(ball.isCue):
             ball.vel = cueVel
-            while abs(ball.vel[0])>5 or abs(ball.vel[1])>5:
+            while not isTurnDone(state):
                 ui.render(state.balls)
+                state.printState()
+def isTurnDone(state):
+       for ball in state.balls:
+              if ball.vel[0] > 0 or ball.vel[1] > 0:
+                     return False
+       return True
+
+def playPlayerTurn(state):
+       runTurn(state, (100,0))
+
+def playBotTurn(state):
+       runTurn(state, (100,0))
+
+def checkWinner(state, previousState, stripes):
+       scoredBalls = [x for x in previousState if x not in set(state.balls)]
+       if(stripes == 0):
+              
+
+def runGame():
+       mainState = GameState()
+       winner = 0
+       whoIsStripes = 0
+       previousState = copy.deepCopy(mainState)
+       while winner == 0:
+              playPlayerTurn(mainState)
+              winner = checkWinner(mainState, previousState, whoIsStripes)
+              if(not winner == 0):
+                     break
+              playBotTurn(mainState)
+              winner = checkWinner(mainState, whoIsStripes)
+
+

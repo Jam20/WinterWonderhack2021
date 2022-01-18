@@ -1,6 +1,6 @@
 import math
 import time
-ACCELERATION = (-10, -10)
+DECELERATION = .8
 
 
 class Ball:
@@ -10,11 +10,12 @@ class Ball:
         self.vel = vel
 
 
+
 class Board:
     def __init__(self):
         self.width = 254
-        self.height = 132
-        self.thickness = 13
+        self.height = 127
+        self.thickness = 19
 
 
 class Pocket:
@@ -29,18 +30,24 @@ def sign(num):
 
 def updateBall(dt, ball):
     ball.pos = (ball.pos[0] + ball.vel[0]*dt, ball.pos[1] + ball.vel[1]*dt)
-    ball.vel = (ball.vel[0] + sign(ball.vel[0])*ACCELERATION[0]*dt,
-                ball.vel[1] + sign(ball.vel[1])*ACCELERATION[1] * dt)
+    ball.vel = (ball.vel[0] + -ball.vel[0]*DECELERATION*dt ,
+                ball.vel[1] + -ball.vel[1]*DECELERATION*dt )
+    if(abs(ball.vel[0])<=.001):
+        ball.vel = (0, ball.vel[1])
+    if(abs(ball.vel[1])<=.001):
+        ball.vel = (ball.vel[0], 0)
+    
+
 
 
 def checkWallCollisons(ball):
-    if(ball.pos[0] - ball.radius <= 0):
+    if(ball.pos[0]<= 0):
         ball.vel = (abs(ball.vel[0]), ball.vel[1])
-    if(ball.pos[1] - ball.radius <= 0):
+    if(ball.pos[1]<= 0):
         ball.vel = (ball.vel[0], abs(ball.vel[1]))
-    if(ball.pos[0] + ball.radius >= Board().width):
+    if(ball.pos[0] + ball.radius*2 >= Board().width):
         ball.vel = (-abs(ball.vel[0]), ball.vel[1])
-    if(ball.pos[1] + ball.radius >= Board().height):
+    if(ball.pos[1] + ball.radius*2 >= Board().height):
         ball.vel = (ball.vel[0], -abs(ball.vel[1]))
 
 
