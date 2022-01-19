@@ -7,6 +7,8 @@ import enginev2
 class GameState:
        def __init__(self):
         constRad = enginev2.Ball((0, 0), (0, 0)).radius
+        self.isPlayerStripes = False
+        self.categoryDecided = False
         self.balls = [
             UIBall(0, (85, 64), (0, 0), 0),
 
@@ -62,24 +64,16 @@ def playPlayerTurn(state):
        runTurn(state, (100,0))
 
 def playBotTurn(state):
-       runTurn(state, (100,0))
-
-def checkWinner(state, previousState, stripes):
-       scoredBalls = [x for x in previousState if x not in set(state.balls)]
-       if(stripes == 0):
-              
+       runTurn(state, (200,0))
+           
 
 def runGame():
        mainState = GameState()
        winner = 0
        whoIsStripes = 0
-       previousState = copy.deepCopy(mainState)
+       previousState = copy.deepcopy(mainState)
        while winner == 0:
               playPlayerTurn(mainState)
-              winner = checkWinner(mainState, previousState, whoIsStripes)
-              if(not winner == 0):
-                     break
               playBotTurn(mainState)
-              winner = checkWinner(mainState, whoIsStripes)
 
 

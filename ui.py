@@ -16,6 +16,8 @@ class UIBall(enginev2.Ball):
 mnum = 1 if len(get_monitors()) > 1 else 0
 cmToPixels = int(get_monitors()[
                  mnum].width / (enginev2.Board().width + 2 * enginev2.Board().thickness))
+if get_monitors()[mnum].width>2000:
+    cmToPixels = cmToPixels/2
 
 boardWidth = cmToPixels * enginev2.Board().width
 boardHeight = cmToPixels * enginev2.Board().height
