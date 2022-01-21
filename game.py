@@ -56,15 +56,15 @@ def runTurn(state, cueVel):
                 state.printState()
 def isTurnDone(state):
        for ball in state.balls:
-              if ball.vel[0] > 0 or ball.vel[1] > 0:
+              if abs(ball.vel[0]) > 0 or abs(ball.vel[1]) > 0:
                      return False
        return True
 
 def playPlayerTurn(state):
-       runTurn(state, (100,0))
+       runTurn(state, (-100,0))
 
 def playBotTurn(state):
-       runTurn(state, (200,0))
+       runTurn(state, (10,0))
            
 
 def runGame():

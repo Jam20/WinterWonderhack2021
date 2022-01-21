@@ -49,30 +49,19 @@ tableImage = pygame.transform.scale(tableImage, (screenWidth, screenHeight))
 
 def drawTable():
     screen.blit(tableImage, (0,0))
-    # pygame.draw.rect(screen, (210, 105, 30), (0, 0, screenWidth, screenHeight))
-    # pygame.draw.rect(screen, (0, 255, 0),
-    #                  (boardThickness, boardThickness, boardWidth, boardHeight))
-
-    # # Draw Corner Pockets
-    # pygame.draw.circle(screen, (0, 0, 0), (boardThickness,
-    #                    boardThickness), enginev2.Pocket().radius * cmToPixels)
-    # pygame.draw.circle(screen, (0, 0, 0), (boardWidth + boardThickness,
-    #                    boardThickness), enginev2.Pocket().radius * cmToPixels)
-    # pygame.draw.circle(screen, (0, 0, 0), (boardWidth + boardThickness,
-    #                    boardHeight + boardThickness), enginev2.Pocket().radius * cmToPixels)
-    # pygame.draw.circle(screen, (0, 0, 0), (boardThickness,
-    #                    boardThickness + boardHeight), enginev2.Pocket().radius * cmToPixels)
-
-    # # Draw Side Pockets
-    # pygame.draw.circle(screen, (0, 0, 0), (boardThickness + boardWidth/2,
-    #                    boardThickness + boardHeight), enginev2.Pocket().radius * cmToPixels)
-    # pygame.draw.circle(screen, (0, 0, 0), (boardThickness + boardWidth/2,
-    #                    boardThickness), enginev2.Pocket().radius * cmToPixels)
-
+    # pocketPositions = [(2.66,4.5, 7.75), (132.25,0,6.75), (265,4.5,7.75), (2.66,138.75, 7.75), (132.25,140,6.75), (265,138.75,7.75)]    
+    # for pocketPos in pocketPositions:
+    #     pygame.draw.circle(screen, (255,0,0), ((pocketPos[0]-pocketPos[2])*cmToPixels + boardThickness, (pocketPos[1]-pocketPos[2])*cmToPixels + boardThickness), pocketPos[2]*cmToPixels)
+    wallPositions = [[(0,25), (50,50), (100,100), (200,100)]]
+    for wall in wallPositions:
+        mappedWall = []
+        for pos in wall:
+            mappedWall.append((pos[0]*cmToPixels+boardThickness, pos[1]*cmToPixels+boardThickness))
+        pygame.draw.polygon(screen, (255,0,0), mappedWall)
 
 def drawBalls(balls):
     for ball in balls:
-        screen.blit(images[ball.number], [ball.pos[0] * cmToPixels + boardThickness, ball.pos[1] * cmToPixels + boardThickness])
+        screen.blit(images[ball.number], [(ball.pos[0]-ball.radius) * cmToPixels + boardThickness, (ball.pos[1]-ball.radius) * cmToPixels + boardThickness])
 
 
 def render(balls):
@@ -84,6 +73,5 @@ def render(balls):
     screen.fill((0, 0, 0))
     drawTable()
     drawBalls(balls)
-    pygame.draw.circle(screen, (255,0,0), (80*cmToPixels+boardThickness,5*cmToPixels+boardThickness), 1*cmToPixels)
     pygame.display.flip()
 

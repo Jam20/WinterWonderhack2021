@@ -20,7 +20,7 @@ class Board:
 
 class Pocket:
     def __init__(self):
-        self.radius = 12
+        self.radius = 7.75
 
 def sign(num):
     if num >= 0:
@@ -105,8 +105,10 @@ def checkBallCollisions(ball, balls):
 
 
 def checkScoredBalls(ball, ballsToRemove):
-    if ball.pos[0] <= Pocket().radius or ball.pos[0] >= Board().width - Pocket().radius or (ball.pos[0] >= (Board().width/2) - Pocket().radius and ball.pos[0] <= (Board().width/2) + Pocket().radius):
-        if(ball.pos[1] <= Pocket().radius or ball.pos[1] >= Board().height - Pocket().radius):
+    pocketPositions = [(2.66,4.5, 7.75), (132.25,0,6.75), (265,4.5,7.75), (2.66,138.75, 7.75), (132.25,140,6.75), (265,138.75,7.75)]
+    for pocket in pocketPositions:
+        dist = math.sqrt(pow(ball.pos[0]-pocket[0],2) + pow(ball.pos[1]-pocket[1],2))
+        if dist<pocket[2]:
             ballsToRemove.append(ball)
 
 
@@ -116,6 +118,6 @@ def update(dt, balls):
         updateBall(dt, ball)
         checkWallCollisons(ball)
         checkBallCollisions(ball, balls)
-        #checkScoredBalls(ball, ballsToRemove)
+        checkScoredBalls(ball, ballsToRemove)
     for ball in ballsToRemove:
         balls.remove(ball)
