@@ -64,7 +64,7 @@ def playPlayerTurn(state):
        runTurn(state, (-100,0))
 
 def playBotTurn(state):
-       runTurn(state, (10,0))
+       runTurn(state, (200,0))
            
 
 def runGame():

@@ -52,7 +52,12 @@ def drawTable():
     # pocketPositions = [(2.66,4.5, 7.75), (132.25,0,6.75), (265,4.5,7.75), (2.66,138.75, 7.75), (132.25,140,6.75), (265,138.75,7.75)]    
     # for pocketPos in pocketPositions:
     #     pygame.draw.circle(screen, (255,0,0), ((pocketPos[0]-pocketPos[2])*cmToPixels + boardThickness, (pocketPos[1]-pocketPos[2])*cmToPixels + boardThickness), pocketPos[2]*cmToPixels)
-    wallPositions = [[(0,25), (50,50), (100,100), (200,100)]]
+    wallPositions = [[ (-5.3,   4.25  ),   (0,      9.5   ),   (0,     116.7  ),   (-5.3,  122.5   ) ],
+                     [ (259.5,  4.25  ),   (254.3,  9.5   ),   (254.3, 117    ),   (259.5, 123    ) ],
+                     [ (8,      -.1   ),   (2.25,   -5.3  ),   (118.2, -5.3   ),   (116,   -.1    ) ],
+                     [ (134.75, -.1   ),   (132.25, -5.3  ),   (249.5, -5.3   ),   (243.9, -.1    ) ],
+                     [ (134.75, 127.25),   (132.25, 132.4 ),   (249.5, 132.4  ),   (243.9, 127.25 ) ],
+                     [ (8.3,    127.25),   (2.75,   132.4 ),   (118.7, 132.4  ),   (116.5, 127.25 ) ]]
     for wall in wallPositions:
         mappedWall = []
         for pos in wall:
