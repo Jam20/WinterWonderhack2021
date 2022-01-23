@@ -3,6 +3,8 @@ from screeninfo import get_monitors
 import ui
 from ui import UIBall
 import enginev2
+import pygame
+import math
 
 class GameState:
        def __init__(self):
@@ -60,8 +62,20 @@ def isTurnDone(state):
                      return False
        return True
 
+def getPlayerVel(state):
+       cueBall = [ball for ball in state.balls if ball.isCue][0]
+       leftMouse = pygame.mouse.get_pressed()[0] == 1
+       while not leftMouse:
+              mousePos = pygame.mouse.get_pos()
+              mouseDist = (mousePos[0]-(cueBall.pos[0]*ui.cmToPixels+ui.boardThickness), mousePos[1]- (cueBall.pos[1]*ui.cmToPixels + ui.boardThickness))
+              distMag = math.sqrt(pow(mouseDist[0], 2) + pow(mouseDist[1], 2))
+              currentVel = (mouseDist[0]/distMag, mouseDist[1]/distMag)
+              ui.render(state.balls, currentVel)
+              leftMouse = pygame.mouse.get_pressed()[0] == 1
+
 def playPlayerTurn(state):
-       runTurn(state, (-100,0))
+       cueVel = getPlayerVel(state)
+       runTurn(state, cueVel)
 
 def playBotTurn(state):
        runTurn(state, (200,0))
