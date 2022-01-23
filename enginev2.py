@@ -99,12 +99,17 @@ def checkBallCollisions(ball, balls):
                 ballPos = (ballPos[0] - (overlap * distNormalized[0] * .5), ballPos[1] - (overlap * distNormalized[1] * .5))
                 otherBallPos = (otherBallPos[0] + (overlap * distNormalized[0]* .5), otherBallPos[1] + (overlap * distNormalized[1] * .5))
                 
-                normal = ((ballPos[0] - otherBallPos[0])/distMag,
-                          (ballPos[1] - otherBallPos[1])/distMag)
+                normal  = ((otherBallPos[0] - ballPos[0])/distMag,(otherBallPos[1] - ballPos[1])/distMag)
+
+                k = (ball.vel[0]-otherBall.vel[0], ball.vel[1]-otherBall.vel[1])
+                p = (normal[0]*k[0]+normal[1]*k[1])
+                ball.vel = (ball.vel[0] - p*normal[0], ball.vel[1] - p*normal[1])
+                otherBall.vel = (otherBall.vel[0] + p*normal[0], otherBall.vel[1] + p*normal[1])
+
                 
-                p = (ball.vel[0]*normal[0]-otherBall.vel[0]*normal[0], ball.vel[1]*normal[1]-otherBall.vel[1]*normal[1])
-                ball.vel = (ball.vel[0] - p[0]*normal[0], ball.vel[1] - p[1]*normal[1])
-                otherBall.vel = (otherBall.vel[0] + p[0] * normal[0], otherBall.vel[1] + p[1]*normal[1])
+                # p = (ball.vel[0]*normal[0]-otherBall.vel[0]*normal[0], ball.vel[1]*normal[1]-otherBall.vel[1]*normal[1])
+                # ball.vel = (ball.vel[0] - p[0]*normal[0], ball.vel[1] - p[1]*normal[1])
+                # otherBall.vel = (otherBall.vel[0] + p[0] * normal[0], otherBall.vel[1] + p[1]*normal[1])
                 
                 ball.pos = (ballPos[0] - ball.radius, ballPos[1] - ball.radius)
                 otherBall.pos = (otherBallPos[0] - otherBall.radius, otherBallPos[1] - otherBall.radius)
