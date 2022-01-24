@@ -77,12 +77,17 @@ def drawBalls(balls):
 def drawCue(currentVel, ball):
     if currentVel[0] == 0 and currentVel[1] == 0:
         return
-    cueTipPos = (ball.pos[0]-.4 + (ball.radius)*currentVel[0],ball.pos[1] + (ball.radius)*currentVel[1])
-    cueAngle = math.atan2((currentVel[1]), -currentVel[0])*180/math.pi+180
+    
+    velMag = math.sqrt(pow(currentVel[0],2) + pow(currentVel[1],2))
+    velComp = (currentVel[0]/velMag, currentVel[1]/velMag)
+
+    cueTipPos = (ball.pos[0]-.4 + (ball.radius+velMag/10)*velComp[0],ball.pos[1] + (ball.radius+velMag/10)*velComp[1])
+    cueAngle = math.atan2((velComp[1]), -velComp[0])*180/math.pi+180
     if cueAngle > 0 and cueAngle <180:
-        cueTipPos = (cueTipPos[0], cueTipPos[1]+(509/cmToPixels)*currentVel[1])
+        cueTipPos = (cueTipPos[0], cueTipPos[1]+(509/cmToPixels)*velComp[1])
     if cueAngle > 90 and cueAngle < 270: 
-        cueTipPos = (cueTipPos[0]+(509/cmToPixels)*currentVel[0], cueTipPos[1])
+        cueTipPos = (cueTipPos[0]+(509/cmToPixels)*velComp[0], cueTipPos[1])
+    
     angledImg = pygame.transform.rotate(cueImage, cueAngle)
     screen.blit(angledImg, [boardThickness + cueTipPos[0]*cmToPixels, boardThickness + cueTipPos[1]*cmToPixels])
 

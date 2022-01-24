@@ -5,6 +5,8 @@ from ui import UIBall
 import enginev2
 import pygame
 import math
+import time
+MAX_VEL = 300
 
 class GameState:
        def __init__(self):
@@ -72,6 +74,22 @@ def getPlayerVel(state):
               currentVel = (mouseDist[0]/distMag, mouseDist[1]/distMag)
               ui.render(state.balls, currentVel)
               leftMouse = pygame.mouse.get_pressed()[0] == 1
+       initTime = time.perf_counter()
+       timeElapsed = time.perf_counter()-initTime
+       while leftMouse:
+              mousePos = pygame.mouse.get_pos()
+              mouseDist = (mousePos[0]-(cueBall.pos[0]*ui.cmToPixels+ui.boardThickness), mousePos[1]- (cueBall.pos[1]*ui.cmToPixels + ui.boardThickness))
+              distMag = math.sqrt(pow(mouseDist[0], 2) + pow(mouseDist[1], 2))
+              currentVel = (mouseDist[0]/distMag, mouseDist[1]/distMag)
+              power = timeElapsed/3 * MAX_VEL
+              currentVel = (currentVel[0] * power, currentVel[1] * power)
+              ui.render(state.balls, currentVel)
+              timeElapsed = time.perf_counter()-initTime
+              timeElapsed = 3 if timeElapsed>3 else timeElapsed
+              leftMouse = pygame.mouse.get_pressed()[0] == 1
+       currentVel = (currentVel[0]*math.cos(math.pi) - currentVel[1]*math.sin(math.pi)
+                    ,currentVel[0]*math.sin(math.pi) + currentVel[1]*math.cos(math.pi))
+       return currentVel
 
 def playPlayerTurn(state):
        cueVel = getPlayerVel(state)
