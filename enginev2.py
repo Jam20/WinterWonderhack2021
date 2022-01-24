@@ -80,6 +80,7 @@ def checkWallCollisons(ball):
                     ball.vel = (-ball.vel[0], ball.vel[1])
                 elif (not isVert(rectLines[idx])) and ball.pos[0] >= rectLines[idx][0][0] and ball.pos[0]<= rectLines[idx][1][0]:
                     ball.vel = (ball.vel[0], -ball.vel[1])
+                    
 
 
 def checkBallCollisions(ball, balls):
@@ -99,13 +100,16 @@ def checkBallCollisions(ball, balls):
                 ballPos = (ballPos[0] - (overlap * distNormalized[0] * .5), ballPos[1] - (overlap * distNormalized[1] * .5))
                 otherBallPos = (otherBallPos[0] + (overlap * distNormalized[0]* .5), otherBallPos[1] + (overlap * distNormalized[1] * .5))
                 
-                normal  = ((otherBallPos[0] - ballPos[0])/distMag,(otherBallPos[1] - ballPos[1])/distMag)
+                dist = ((otherBallPos[0] - ballPos[0]),
+                    otherBallPos[1] - ballPos[1])
 
-                k = (ball.vel[0]-otherBall.vel[0], ball.vel[1]-otherBall.vel[1])
-                p = (normal[0]*k[0]+normal[1]*k[1])
-                ball.vel = (ball.vel[0] - p*normal[0], ball.vel[1] - p*normal[1])
-                otherBall.vel = (otherBall.vel[0] + p*normal[0], otherBall.vel[1] + p*normal[1])
-
+                distMag = (math.sqrt(pow(dist[0], 2) + pow(dist[1], 2)))
+            
+                normalx = (otherBallPos[0] - ballPos[0])/distMag
+                normaly = (otherBallPos[1] - ballPos[1])/distMag
+                p = 2 * (ball.vel[0]*normalx + ball.vel[1] * normaly - otherBall.vel[0]* normalx - otherBall.vel[1]*normaly)/4
+                ball.vel = (ball.vel[0] - p*2*normalx, ball.vel[1] - p*2*normaly)
+                otherBall.vel = (otherBall.vel[0] + p*2*normalx, otherBall.vel[1] + p*2*normaly)
                 
                 # p = (ball.vel[0]*normal[0]-otherBall.vel[0]*normal[0], ball.vel[1]*normal[1]-otherBall.vel[1]*normal[1])
                 # ball.vel = (ball.vel[0] - p[0]*normal[0], ball.vel[1] - p[1]*normal[1])

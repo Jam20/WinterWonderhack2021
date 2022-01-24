@@ -97,7 +97,7 @@ def render(balls, currentVel = (0,0)):
         if event.type == pygame.QUIT:
             exit()
 
-    enginev2.update(clock.tick(300)/1000, balls)
+    enginev2.update(clock.tick(1000)/1000, balls)
 
     screen.fill((0, 0, 0))
     drawTable()
