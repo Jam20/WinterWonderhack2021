@@ -7,7 +7,7 @@ import math
 frameTime = pygame.time.get_ticks()
 
 class UIBall(enginev2.Ball):
-    def __init__(self, id, pos, vel, number):
+    def __init__(self, number, pos, vel = (0,0)):
         enginev2.Ball.__init__(self, pos, vel)
         self.number = number
         self.isStripped = number>8

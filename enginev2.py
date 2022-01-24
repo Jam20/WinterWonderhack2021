@@ -53,33 +53,33 @@ def wallMin(wall, isX):
         min = pos if pos<min else min
     return min
 
-def isVert(rectLine):
-    return rectLine[0][0] == rectLine[1][0]
+def isVert(pointA, pointB):
+    return pointA[0] == pointB[0]
 
 def checkWallCollisons(ball):
-    wallPositions = [[ (-5.3,   4.25  ),   (0,      9.5   ),   (0,     117    ),   (-5.3,  122.5  ) ],
-                     [ (254.3,  9.5   ),   (259.5,  4.25  ),   (259.5, 123    ),   (254.3, 117    ) ],
-                     [ (8,      -.1   ),   (2.25,   -5.3  ),   (118.2, -5.3   ),   (116,   -.1    ) ],
-                     [ (134.75, -.1   ),   (132.25, -5.3  ),   (249.5, -5.3   ),   (243.9, -.1    ) ],
-                     [ (134.75, 127.25),   (132.25, 132.4 ),   (249.5, 132.4  ),   (243.9, 127.25 ) ],
-                     [ (8.3,    127.25),   (2.75,   132.4 ),   (118.7, 132.4  ),   (116.5, 127.25 ) ]]
-    rectLines = [[(0,      9.5   ),   (0,     117    )],
-                 [(254.3,  9.5   ),   (254.3, 117    )],
-                 [(8,      -.1   ),   (116,   -.1    )],
-                 [(134.75, -.1   ),   (243.9, -.1    )],
-                 [(134.75, 127.25),   (243.9, 127.25 )],
-                 [(8.3,    127.25),   (116.5, 127.25 )]]
-    for wall in wallPositions:  
-        corners = [(wallMin(wall, True), wallMin(wall, False)), ((wallMax(wall, True), wallMax(wall, False)))]
-        collideX = ball.pos[0]+ball.radius>=corners[0][0] and ball.pos[0]-ball.radius<=corners[1][0]
-        collideY = ball.pos[1]+ball.radius>=corners[0][1] and ball.pos[1]-ball.radius<=corners[1][1]
-        if collideX:
-            if collideY:
-                idx = indexOf(wallPositions, wall)
-                if isVert(rectLines[idx]) and ball.pos[1] >= rectLines[idx][0][1] and ball.pos[1]<= rectLines[idx][1][1]:
-                    ball.vel = (-ball.vel[0], ball.vel[1])
-                elif (not isVert(rectLines[idx])) and ball.pos[0] >= rectLines[idx][0][0] and ball.pos[0]<= rectLines[idx][1][0]:
-                    ball.vel = (ball.vel[0], -ball.vel[1])
+    wallPositions = [[ (0,      9.5   ),   (0,     117    ),   (-5.3,   4.25  ),   (-5.3,  122.5  ) ],
+                     [ (254.3,  9.5   ),   (254.3, 117    ),   (259.5,  4.25  ),   (259.5, 123    ) ],
+                     [ (8,      -.1   ),   (116,   -.1    ),   (2.25,   -5.3  ),   (118.2, -5.3   ),],
+                     [ (134.75, -.1   ),   (243.9, -.1    ),   (132.25, -5.3  ),   (249.5, -5.3   ),],
+                     [ (134.75, 127.25),   (243.9, 127.25 ),   (132.25, 132.4 ),   (249.5, 132.4  ) ],
+                     [ (8.3,    127.25),   (116.5, 127.25 ),   (2.75,   132.4 ),   (118.7, 132.4  ) ] 
+                    ]
+
+    for wall in wallPositions:
+        #Check Rectangular Collisions
+        if isVert(wall[0], wall[1]):
+            collideLeft  = ball.pos[0]<wall[0][0]
+            isLeftWall = wall[0][0] < wall[2][0]
+            if collideLeft == isLeftWall:
+                if (not ball.pos[0] == wall[0][0]) and ball.pos[1] >= wall[0][1] and ball.pos[1] <= wall[1][1]:
+                    ball.pos = (wall[0][0], ball.pos[1])
+                    ball.vel = (-ball.vel[0], ball.vel[0])
+
+        elif (ball.pos[1]<wall[0][1]) == (wall[0][1] > wall[2][1]):
+            if not(ball.pos[1] == wall[0][1]) and ball.pos[0] >= wall[0][0] and ball.pos[0] <= wall[1][0]:
+                ball.pos = (ball.pos[0], wall[0][1])
+                ball.vel = (ball.vel[0], -ball.vel[1])
+
                     
 
 
