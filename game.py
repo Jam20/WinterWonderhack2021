@@ -11,8 +11,7 @@ MAX_VEL = 300
 class GameState:
        def __init__(self):
         self.isPlayerStripes = False
-        self.categoryDecided = False
-        
+        self.isCategoryDecided = False
         self.balls = [
             UIBall(0, (85, 64)),
 
@@ -35,37 +34,6 @@ class GameState:
             UIBall(13,  (210, 64)),
             UIBall(14,  (210, 74)),
             UIBall(15,  (210, 84)),
-                        
-
-       #      UIBall(1, (170, 64), (0, 0), 1),
-
-       #      UIBall(9, (170 + constRad * 2, 64 - constRad),
-       #             (0, 0), 2),
-       #      UIBall(2, (170 + constRad * 2, 64 + constRad), (0, 0), 3),
-
-       #      UIBall(10, (170 + constRad * 4, 64 - constRad * 2),
-       #             (0, 0), 4),
-       #      UIBall(8, (170 + constRad * 4, 64), (0, 0), 5),
-       #      UIBall(3, (170 + constRad * 4, 64 + constRad * 2),
-       #             (0, 0), 6),
-
-       #      UIBall(11, (170 + constRad * 6, 64 - constRad * 3),
-       #             (0, 0), 7),
-       #      UIBall(7, (170 + constRad * 6, 64 - constRad), (0, 0), 8),
-       #      UIBall(14, (170 + constRad * 6, 64 + constRad),
-       #             (0, 0), 9),
-       #      UIBall(4, (170 + constRad * 6, 64 + constRad * 3),
-       #             (0, 0), 10),
-
-       #      UIBall(5, (170 + constRad * 8, 64 - constRad * 4),
-       #             (0, 0), 11),
-       #      UIBall(13, (170 + constRad * 8, 64 - constRad * 2),
-       #             (0, 0), 12),
-       #      UIBall(15, (170 + constRad * 8, 64), (0, 0), 13),
-       #      UIBall(6, (170 + constRad * 8, 64 + constRad * 2),
-       #             (0, 0), 14),
-       #      UIBall(12, (170 + constRad * 8, 64 + constRad * 4),
-       #             (0, 0), 15),
         ]
         
        def printState(self):
@@ -74,12 +42,15 @@ class GameState:
                      print('Ball ', str(ball.number), ': Pos ', str(ball.pos), ", Vel ", str(ball.vel))
 
 def runTurn(state, cueVel):
-    for ball in state.balls:
-        if(ball.isCue):
-            ball.vel = cueVel
-            while not isTurnDone(state):
-                ui.render(state.balls)
-                state.printState()
+       ballsRemovedThisTurn = []
+       for ball in state.balls:
+              ball.vel = cueVel if ball.isCue else ball.vel
+
+              while not isTurnDone(state):
+                     removedBalls = ui.render(state.balls)
+                     ballsRemovedThisTurn.extend(removedBalls)
+                     state.printState()
+       return ballsRemovedThisTurn
 def isTurnDone(state):
        for ball in state.balls:
               if abs(ball.vel[0]) > 0 or abs(ball.vel[1]) > 0:
@@ -115,10 +86,33 @@ def getPlayerVel(state):
 
 def playPlayerTurn(state):
        cueVel = getPlayerVel(state)
-       runTurn(state, cueVel)
+       ballsRemoved = runTurn(state, cueVel)
+       if len(ballsRemoved) > 0:
+              if not state.isCategoryDecided:
+                     state.isPlayerStripes = ballsRemoved[0].isStripped
+                     state.isCategoryDecided = True
+              scratch = False
+              for ball in ballsRemoved:
+                     if ball.isCue:
+                            state.balls.append(UIBall(0, (85,64)))
+                            scratch = True
+                            return
+              if not scratch and state.isPlayerStripes == ballsRemoved[0].isStripped:
+                     playPlayerTurn(state)
 
 def playBotTurn(state):
-       runTurn(state, (200,0))
+       ballsRemoved = runTurn(state, (200,0))
+       if len(ballsRemoved) > 0:
+              if not state.isCategoryDecided:
+                     state.isPlayerStripes = not ballsRemoved[0].isStripped
+                     state.isCategoryDecided = True
+              for ball in ballsRemoved:
+                     if ball.isCue:
+                            state.balls.append(UIBall(0, (85,64)))
+                            return
+              if not (state.isPlayerStripes == ballsRemoved[0].isStripped):
+                     playBotTurn(state)
+
            
 
 def runGame():
@@ -129,6 +123,6 @@ def runGame():
        mainState.printState()
        while winner == 0:
               playPlayerTurn(mainState)
-              #playBotTurn(mainState)
+              playBotTurn(mainState)
 
 

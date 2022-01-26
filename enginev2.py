@@ -167,3 +167,4 @@ def update(dt, balls):
         checkScoredBalls(ball, ballsToRemove)
     for ball in ballsToRemove:
         balls.remove(ball)
+    return ballsToRemove

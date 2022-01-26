@@ -97,11 +97,12 @@ def render(balls, currentVel = (0,0)):
         if event.type == pygame.QUIT:
             exit()
 
-    enginev2.update(clock.tick(1000)/1000, balls)
+    ballsRemoved = enginev2.update(clock.tick(1000)/1000, balls)
 
     screen.fill((0, 0, 0))
     drawTable()
     cueBall = drawBalls(balls)
     drawCue(currentVel, cueBall)
     pygame.display.flip()
+    return ballsRemoved
 
