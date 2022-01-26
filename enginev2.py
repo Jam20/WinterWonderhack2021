@@ -1,6 +1,4 @@
 import math
-from operator import indexOf
-import time
 from xmlrpc.client import MAXINT
 DECELERATION = .8
 
@@ -39,47 +37,60 @@ def updateBall(dt, ball):
     if(abs(ball.vel[1])<=.1):
         ball.vel = (ball.vel[0], 0)
     
-def wallMax(wall, isX):
-    max = -MAXINT
-    for point in wall:
-        pos = point[0] if isX else point[1]
-        max = pos if pos>max else max
-    return max
-
-def wallMin(wall, isX):
-    min = MAXINT
-    for point in wall:
-        pos = point[0] if isX else point[1]
-        min = pos if pos<min else min
-    return min
-
 def isVert(pointA, pointB):
     return pointA[0] == pointB[0]
 
 def checkWallCollisons(ball):
-    wallPositions = [[ (0,      9.5   ),   (0,     117    ),   (-5.3,   4.25  ),   (-5.3,  122.5  ) ],
-                     [ (254.3,  9.5   ),   (254.3, 117    ),   (259.5,  4.25  ),   (259.5, 123    ) ],
-                     [ (8,      -.1   ),   (116,   -.1    ),   (2.25,   -5.3  ),   (118.2, -5.3   ),],
-                     [ (134.75, -.1   ),   (243.9, -.1    ),   (132.25, -5.3  ),   (249.5, -5.3   ),],
-                     [ (134.75, 127.25),   (243.9, 127.25 ),   (132.25, 132.4 ),   (249.5, 132.4  ) ],
-                     [ (8.3,    127.25),   (116.5, 127.25 ),   (2.75,   132.4 ),   (118.7, 132.4  ) ] 
-                    ]
+    leftWall        = [ (0,      9.5   ),   (0,     117    ),   (-5.3,   4.25  ),   (-5.3,  122.5  ) ]
+    rightWall       = [ (254.3,  9.5   ),   (254.3, 117    ),   (259.5,  4.25  ),   (259.5, 123    ) ]
+    topLeftWall     = [ (8,      -.1   ),   (116,   -.1    ),   (2.25,   -5.3  ),   (118.2, -5.3   ) ]
+    topRightWall    = [ (134.75, -.1   ),   (243.9, -.1    ),   (132.25, -5.3  ),   (249.5, -5.3   ) ]
+    bottomLeftWall  = [ (8.3,    127.25),   (116.5, 127.25 ),   (2.75,   132.4 ),   (118.7, 132.4  ) ] 
+    bottomRightWall = [ (134.75, 127.25),   (243.9, 127.25 ),   (132.25, 132.4 ),   (249.5, 132.4  ) ]
 
-    for wall in wallPositions:
-        #Check Rectangular Collisions
-        if isVert(wall[0], wall[1]):
-            collideLeft  = ball.pos[0]<wall[0][0]
-            isLeftWall = wall[0][0] < wall[2][0]
-            if collideLeft == isLeftWall:
-                if (not ball.pos[0] == wall[0][0]) and ball.pos[1] >= wall[0][1] and ball.pos[1] <= wall[1][1]:
-                    ball.pos = (wall[0][0], ball.pos[1])
-                    ball.vel = (-ball.vel[0], ball.vel[0])
+    walls = [leftWall, rightWall, topLeftWall, topRightWall, bottomLeftWall, bottomRightWall]
 
-        elif (ball.pos[1]<wall[0][1]) == (wall[0][1] > wall[2][1]):
-            if not(ball.pos[1] == wall[0][1]) and ball.pos[0] >= wall[0][0] and ball.pos[0] <= wall[1][0]:
-                ball.pos = (ball.pos[0], wall[0][1])
-                ball.vel = (ball.vel[0], -ball.vel[1])
 
+    #Check Rectangular Collisions
+    collideLeft        = ball.pos[0] - ball.radius < leftWall[0][0]        and ball.pos[1] >= leftWall[0][1]        and ball.pos[1] <= leftWall[1][1]
+    collideRight       = ball.pos[0] + ball.radius > rightWall[0][0]       and ball.pos[1] >= rightWall[0][1]       and ball.pos[1] <= rightWall[1][1]
+    collideTopLeft     = ball.pos[1] - ball.radius < topLeftWall[0][1]     and ball.pos[0] >= topLeftWall[0][0]     and ball.pos[0] <= topLeftWall[1][0]
+    collideTopRight    = ball.pos[1] - ball.radius < topRightWall[0][1]    and ball.pos[0] >= topRightWall[0][0]    and ball.pos[0] <= topRightWall[1][0]
+    collideBottomLeft  = ball.pos[1] + ball.radius > bottomLeftWall[0][1]  and ball.pos[0] >= bottomLeftWall[0][0]  and ball.pos[0] <= bottomLeftWall[1][0]
+    collideBottomRight = ball.pos[1] + ball.radius > bottomRightWall[0][1] and ball.pos[0] >= bottomRightWall[0][0] and ball.pos[0] <= bottomRightWall[1][0]
+    
+    verticalCollision   = collideTopRight or collideTopLeft or collideBottomRight or collideBottomLeft
+    horizontalCollision = collideLeft     or collideRight
+
+
+    #Update Velocity
+    ball.vel = (-ball.vel[0], ball.vel[1]) if horizontalCollision else ball.vel
+    ball.vel = (ball.vel[0], -ball.vel[1]) if verticalCollision   else ball.vel
+
+    #Update Position
+    ball.pos = (leftWall[0][0]  + ball.radius, ball.pos[1]) if collideLeft  else ball.pos
+    ball.pos = (rightWall[0][0] - ball.radius, ball.pos[1]) if collideRight else ball.pos
+    ball.pos = (ball.pos[0], topLeftWall[0][1] + ball.radius) if collideTopLeft    or collideTopRight    else ball.pos
+    ball.pos = (ball.pos[0], bottomLeftWall[0][1] - ball.radius) if collideBottomLeft or collideBottomRight else ball.pos
+    
+    #Check Triangular Collisions
+    for wall in walls:
+        c1x = ball.pos[0] - wall[0][0]
+        c1y = ball.pos[1] - wall[0][1]
+
+        radiusSqr = pow(ball.radius,2)
+        c1sqr = pow(c1x,2) + pow(c1y,2) - radiusSqr
+        
+        e1x = wall[2][0] - wall[0][0]
+        e1y = wall[2][1] - wall[0][1]
+        
+        k = c1x*e1x + c1y+e1y
+        if k>0:
+            len = pow(e1x,2) + pow(e1y,2)
+            if k<len and c1sqr * len <= pow(k,2):
+                ball.vel = (ball.vel[1], ball.vel[0])                
+
+    
                     
 
 

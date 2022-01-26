@@ -67,6 +67,7 @@ class GameState:
        #      UIBall(12, (170 + constRad * 8, 64 + constRad * 4),
        #             (0, 0), 15),
         ]
+        
        def printState(self):
               print('Ball Information:', flush=True)
               for ball in self.balls:
@@ -125,8 +126,9 @@ def runGame():
        winner = 0
        whoIsStripes = 0
        previousState = copy.deepcopy(mainState)
+       mainState.printState()
        while winner == 0:
               playPlayerTurn(mainState)
-              playBotTurn(mainState)
+              #playBotTurn(mainState)
 
 
