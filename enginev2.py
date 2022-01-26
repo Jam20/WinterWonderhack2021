@@ -89,6 +89,21 @@ def checkWallCollisons(ball):
             len = pow(e1x,2) + pow(e1y,2)
             if k<len and c1sqr * len <= pow(k,2):
                 ball.vel = (ball.vel[1], ball.vel[0])                
+    for wall in walls:
+        c1x = ball.pos[0] - wall[1][0]
+        c1y = ball.pos[1] - wall[1][1]
+
+        radiusSqr = pow(ball.radius,2)
+        c1sqr = pow(c1x,2) + pow(c1y,2) - radiusSqr
+        
+        e1x = wall[3][0] - wall[1][0]
+        e1y = wall[3][1] - wall[1][1]
+        
+        k = c1x*e1x + c1y+e1y
+        if k>0:
+            len = pow(e1x,2) + pow(e1y,2)
+            if k<len and c1sqr * len <= pow(k,2):
+                ball.vel = (ball.vel[1], ball.vel[0])                
 
     
                     
