@@ -96,9 +96,20 @@ def playPlayerTurn(state):
                      if ball.isCue:
                             state.balls.append(UIBall(0, (85,64)))
                             scratch = True
-                            return
+                            return 0
+                     if ball.number == 8:
+                            return 2
               if not scratch and state.isPlayerStripes == ballsRemoved[0].isStripped:
                      playPlayerTurn(state)
+       hasWon = True
+       if not state.isCategoryDecided:
+              return 0
+       for ball in state.balls:
+              if ball.isStripped == state.isPlayerStripes and not ball.isCue:
+                     hasWon = False
+              if ball.number == 8:
+                     hasWon = False
+       return 1 if hasWon else 0
 
 def playBotTurn(state):
        ballsRemoved = runTurn(state, (200,0))
@@ -112,7 +123,15 @@ def playBotTurn(state):
                             return
               if not (state.isPlayerStripes == ballsRemoved[0].isStripped):
                      playBotTurn(state)
-
+       hasWon = True
+       if not state.isCategoryDecided:
+              return 0
+       for ball in state.balls:
+              if not ball.isStripped == state.isPlayerStripes and not ball.isCue:
+                     hasWon = False
+              if ball.number == 8:
+                     hasWon = False
+       return 2 if hasWon else 0
            
 
 def runGame():
@@ -122,7 +141,11 @@ def runGame():
        previousState = copy.deepcopy(mainState)
        mainState.printState()
        while winner == 0:
-              playPlayerTurn(mainState)
-              playBotTurn(mainState)
+              winner = playPlayerTurn(mainState)
+              winner = playBotTurn(mainState)
+       if winner == 1:
+              print("YOU WIN GOOD JOB")
+       else:
+              print("YOU LOSE GET GOOD")
 
 
