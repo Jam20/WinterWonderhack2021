@@ -2,10 +2,10 @@ import copy
 from screeninfo import get_monitors
 import ui
 from ui import UIBall
-import enginev2
 import pygame
 import math
 import time
+import botv2
 MAX_VEL = 300
 
 class GameState:
@@ -112,6 +112,7 @@ def playPlayerTurn(state):
        return 1 if hasWon else 0
 
 def playBotTurn(state):
+       botTurn = botv2.getBestMove(state)
        ballsRemoved = runTurn(state, (200,0))
        if len(ballsRemoved) > 0:
               if not state.isCategoryDecided:
