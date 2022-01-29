@@ -14,24 +14,40 @@ class simulation:
 
 def getBestMove(state):
     pool = Pool()
-    scores = [[]]
-    for x in range(0,300):
-        rowScores = pool.map(simulate, [simulation(state,(x,y)) for y in range(0,300)])
+    results = []
+    cueIdx = -1
+    
+    for ball in state.balls:
+        if ball.isCue:
+            cueIdx = state.balls.index(ball)
+    state.balls[cueIdx], state.balls[0] = state.balls[0], state.balls[cueIdx]
+    
+    for x in range(0,200):
+        rowResults = pool.map_async(simulate, [simulation(state,(x,y)) for y in range(0,200)])
+        results.append(rowResults)
+
+    bestScore = -1
+    bestVel = (0,0)
+    for row in results:
+        scores= row.get()
+        for score in scores:
+            if score> bestScore:
+                bestVel = (results.index(row), scores.index(score))
+                bestScore = score
+    return bestVel
+    
 
             
 def simulate(simulation):
     usableState = deepcopy(simulation.state)
     ballsRemovedThisIteration = []
-    
-    for ball in usableState.balls:
-        if ball.isCue:
-            ball.vel = simulation.vel
+    print("Starting simulation with velocity: " + str(simulation.vel), flush=True)
+    usableState.balls[0].vel = simulation.vel
     
     while(not game.isTurnDone(usableState)):
         removed = enginev2.update(0.1, usableState.balls)
         ballsRemovedThisIteration.extend(removed)
 
-    
     isPlayerStripes = False
     if simulation.state.isCategoryDecided:
         isPlayerStripes = simulation.state.isPlayerStripes
