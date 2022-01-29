@@ -136,11 +136,6 @@ def checkBallCollisions(ball, balls):
                 p = 2 * (ball.vel[0]*normalx + ball.vel[1] * normaly - otherBall.vel[0]* normalx - otherBall.vel[1]*normaly)/4
                 ball.vel = (ball.vel[0] - p*2*normalx, ball.vel[1] - p*2*normaly)
                 otherBall.vel = (otherBall.vel[0] + p*2*normalx, otherBall.vel[1] + p*2*normaly)
-                
-                # p = (ball.vel[0]*normal[0]-otherBall.vel[0]*normal[0], ball.vel[1]*normal[1]-otherBall.vel[1]*normal[1])
-                # ball.vel = (ball.vel[0] - p[0]*normal[0], ball.vel[1] - p[1]*normal[1])
-                # otherBall.vel = (otherBall.vel[0] + p[0] * normal[0], otherBall.vel[1] + p[1]*normal[1])
-                
                 ball.pos = (ballPos[0] - ball.radius, ballPos[1] - ball.radius)
                 otherBall.pos = (otherBallPos[0] - otherBall.radius, otherBallPos[1] - otherBall.radius)
 
