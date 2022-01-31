@@ -1,4 +1,6 @@
 import math
+import numpy as np
+
 from xmlrpc.client import MAXINT
 DECELERATION = .6
 
@@ -22,21 +24,12 @@ class Pocket:
     def __init__(self):
         self.radius = 7.75
 
-def sign(num):
-    if num >= 0:
-        return 1
-    else:
-        return -1
-
 def updateBall(dt, ball):
-    ball.pos = (ball.pos[0] + ball.vel[0]*dt, ball.pos[1] + ball.vel[1]*dt)
-    decel = (ball.vel[0]*(1-DECELERATION)*dt, ball.vel[1]*(1-DECELERATION)*dt)
-    ball.vel = (ball.vel[0] - decel[0] ,
-                ball.vel[1] - decel[1] )
-    if(abs(ball.vel[0])<=.1):
-        ball.vel = (0, ball.vel[1])
-    if(abs(ball.vel[1])<=.1):
-        ball.vel = (ball.vel[0], 0)
+    ball.pos += ball.vel*dt #Update position based on velocity
+    decel = ball.vel*(1-DECELERATION)*dt #Calculate deceleration based on current velocity
+    ball.vel = ball.vel-decel #Update velocity based on amount of deceleration
+    ball.vel = np.zeros(2) if np.abs(ball.vel).sum() < 0.1 else ball.vel #Zero out the velocity if low enough
+
     
 def isVert(pointA, pointB):
     return pointA[0] == pointB[0]
