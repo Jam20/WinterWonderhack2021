@@ -49,7 +49,7 @@ def runTurn(state, cueVel):
               while not isTurnDone(state):
                      removedBalls = ui.render(state.balls)
                      ballsRemovedThisTurn.extend(removedBalls)
-                     state.printState()
+                     #state.printState()
        return ballsRemovedThisTurn
 def isTurnDone(state):
        for ball in state.balls:
@@ -112,8 +112,14 @@ def playPlayerTurn(state):
        return 1 if hasWon else 0
 
 def playBotTurn(state):
-       botTurn = botv2.getBestMove(state)
-       ballsRemoved = runTurn(state, (200,0))
+       botTurn = botv2.getMoves(state)
+       ui.reRender(state.balls)
+       if len(botTurn) > 0:
+              print("FOUND BOT VEL: " + str(botTurn[0]))
+              ballsRemoved = runTurn(state, botTurn[0])
+       else:
+              print("NO BOT VEL FOUND")
+              ballsRemoved = runTurn(state, (200,0))
        if len(ballsRemoved) > 0:
               if not state.isCategoryDecided:
                      state.isPlayerStripes = not ballsRemoved[0].isStripped

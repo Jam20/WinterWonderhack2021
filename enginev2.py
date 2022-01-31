@@ -1,6 +1,6 @@
 import math
 from xmlrpc.client import MAXINT
-DECELERATION = .8
+DECELERATION = .6
 
 
 class Ball:
@@ -30,8 +30,9 @@ def sign(num):
 
 def updateBall(dt, ball):
     ball.pos = (ball.pos[0] + ball.vel[0]*dt, ball.pos[1] + ball.vel[1]*dt)
-    ball.vel = (ball.vel[0] + -ball.vel[0]*DECELERATION*dt ,
-                ball.vel[1] + -ball.vel[1]*DECELERATION*dt )
+    decel = (ball.vel[0]*(1-DECELERATION)*dt, ball.vel[1]*(1-DECELERATION)*dt)
+    ball.vel = (ball.vel[0] - decel[0] ,
+                ball.vel[1] - decel[1] )
     if(abs(ball.vel[0])<=.1):
         ball.vel = (0, ball.vel[1])
     if(abs(ball.vel[1])<=.1):

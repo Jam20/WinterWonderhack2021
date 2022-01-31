@@ -106,3 +106,13 @@ def render(balls, currentVel = (0,0)):
     pygame.display.flip()
     return ballsRemoved
 
+def reRender(balls):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            exit()
+    clock.tick(1000)
+    screen.fill((0, 0, 0))
+    drawTable()
+    cueBall = drawBalls(balls)
+    drawCue((0,0), cueBall)
+    pygame.display.flip()

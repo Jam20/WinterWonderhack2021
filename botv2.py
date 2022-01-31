@@ -1,13 +1,9 @@
 from copy import deepcopy
-from math import atan2
 import math
-from turtle import back
 
-from pygame import init
 import enginev2
 import game
 from multiprocessing import Pool, Manager
-from ui import UIBall
 
 
 class simulation:
@@ -46,15 +42,15 @@ def simulate(simulation):
     usableState.balls[0].vel = simulation.vel
     
     while(not game.isTurnDone(usableState)):
-        removed = enginev2.update(0.1, usableState.balls)
+        removed = enginev2.update(0.01, usableState.balls)
         ballsRemovedThisIteration.extend(removed)
 
     isPlayerStripes = False
     if simulation.state.isCategoryDecided:
         isPlayerStripes = simulation.state.isPlayerStripes
     else:
-        if len(usableState.balls) > 0:
-            isPlayerStripes = not usableState.balls[0].isStripped
+        if len(ballsRemovedThisIteration) > 0:
+            isPlayerStripes = not ballsRemovedThisIteration[0].isStripped
         else:
             return 0
 
@@ -82,12 +78,17 @@ def simulate(simulation):
     return score if not scratch and not loss else -1
 
 
-def getMove(state):
+def getMoves(state):
     velList = []
     for ball in state.balls:
+        if (state.isCategoryDecided and ball.isStripped == state.isPlayerStripes) or ball.isCue:
+                continue
         cueVel = checkScore(state,ball)
         if cueVel[0] >0 or cueVel[1] > 0:
-            velList.append(cueVel)
+            if simulate(simulation(state, cueVel)) > 0:
+                velList.append(cueVel)
+            else:
+                velList.append(cueVel)
     return velList
 
 def checkScore(state, ball):
@@ -99,36 +100,89 @@ def checkScore(state, ball):
                        (265,      138.75,  7.75)
                        ]
     maxAngle = 45
+    print(f"Testing ball {str(ball.number)}")
     for pocket in pocketPositions:
         dist = (pocket[0]-ball.pos[0], pocket[1]-ball.pos[1])
         distMag = math.sqrt(dist[0]**2 + dist[1]**2)
         vel = (dist[0]/distMag, dist[1]/distMag)
         vel = (vel[0]*10, vel[1] * 10)
-        cueVel = backPropegate(state, ball, (pocket[0], pocket[1]), vel)
+        usableState = deepcopy(state)
+        cueVel = backPropegate(usableState, ball, (pocket[0], pocket[1]), vel)
+        if cueVel[0] > 0 or cueVel[1] > 0:
+            return cueVel
+    return (0,0)
 
 
 
 def simulateCollisions(vel):
     velocities = []
-    for x in range(-1,1,0.01):
+    for x in frange(-1.0,1.0,0.01):
         y = math.sin(math.acos(x))
-        otherVely = (vel[1]/y - vel[0]/x)/(2*y)
-        otherVelx = vel[1]/y - otherVely*y
+        if y == 0:
+            otherVely = 0
+            otherVelx = vel[0]
+        elif x == 0:
+            otherVely = vel[1]
+            otherVelx = 0
+        else:
+            otherVely = (vel[1]/y - vel[0]/x)/(2*y)
+            otherVelx = vel[1]/y - otherVely*y    
+            
         velocities.append((otherVelx,otherVely))
     return velocities
 
 
 def backPropegate(state, ball, pos, vel):
+    print(f"Attempting to send ball {str(ball.number)} at velocity {str(vel)}")
     if ball.isCue:
         return vel
+    elif len(state.balls) == 0:
+        return (0,0)
+    ballToRemove = 0
+    for stateBall in state.balls:
+        if ball.number == stateBall.number:
+            ballToRemove = stateBall
+    state.balls.remove(ballToRemove)
     velocities = simulateCollisions(vel)
     for velocity in velocities:
         velMag = math.sqrt(velocity[0]**2 + velocity[1]**2)
         unitVel = (velocity[0]/velMag, velocity[1]/velMag)
         for otherBall in state.balls:
             dist = (otherBall.pos[0]-ball.pos[0], otherBall.pos[1]-ball.pos[1])
-            distMag = math.sqrt(dist[0]**2, dist[1]**2)
+            distMag = math.sqrt(dist[0]**2 + dist[1]**2)
             normal = (dist[0]/distMag, dist[1]/distMag)
             diff = (normal[0]-unitVel[0], normal[1]-unitVel[1])
             if abs(diff[0])<.01 and abs(diff[1]<.01):
-                
+                velMag = getVelForDist(distMag, velMag)
+                desiredVel = ((velMag*1.5) * unitVel[0],(velMag*1.01) * unitVel[1])
+                newVel = backPropegate(state, otherBall, otherBall.pos, desiredVel)
+                if not (newVel[0] == 0 or newVel[1] == 0):
+                    return newVel
+    return (0,0)
+
+def getVelForDist(distMag, finalVelMag):
+    currentDist = 0
+    currentVel = finalVelMag
+    while abs(currentDist)<abs(distMag):
+        currentDist += .01*currentVel
+        currentVel  = currentVel*(1+(1-enginev2.DECELERATION)*.01)
+    currentVel = 300 if currentVel>300 else currentVel
+    return currentVel
+
+def frange(start, stop=None, step=None):
+    start = float(start)
+    if stop == None:
+        stop = start + 0.0
+        start = 0.0
+    if step == None:
+        step = 1.0
+
+    count = 0
+    while True:
+        temp = float(start + count * step)
+        if step > 0 and temp >= stop:
+            break
+        elif step < 0 and temp <= stop:
+            break
+        yield temp
+        count += 1
