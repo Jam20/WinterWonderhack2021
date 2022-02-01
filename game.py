@@ -6,6 +6,7 @@ import pygame
 import math
 import time
 import botv2
+import numpy as np
 MAX_VEL = 300
 
 class GameState:
@@ -44,7 +45,7 @@ class GameState:
 def runTurn(state, cueVel):
        ballsRemovedThisTurn = []
        for ball in state.balls:
-              ball.vel = cueVel if ball.isCue else ball.vel
+              ball.vel = np.array(cueVel) if ball.isCue else ball.vel
 
               while not isTurnDone(state):
                      removedBalls = ui.render(state.balls)
@@ -69,6 +70,7 @@ def getPlayerVel(state):
               leftMouse = pygame.mouse.get_pressed()[0] == 1
        initTime = time.perf_counter()
        timeElapsed = time.perf_counter()-initTime
+       currentVel = (0,0)
        while leftMouse:
               mousePos = pygame.mouse.get_pos()
               mouseDist = (mousePos[0]-(cueBall.pos[0]*ui.cmToPixels+ui.boardThickness), mousePos[1]- (cueBall.pos[1]*ui.cmToPixels + ui.boardThickness))
@@ -80,6 +82,7 @@ def getPlayerVel(state):
               timeElapsed = time.perf_counter()-initTime
               timeElapsed = 3 if timeElapsed>3 else timeElapsed
               leftMouse = pygame.mouse.get_pressed()[0] == 1
+
        currentVel = (currentVel[0]*math.cos(math.pi) - currentVel[1]*math.sin(math.pi)
                     ,currentVel[0]*math.sin(math.pi) + currentVel[1]*math.cos(math.pi))
        return currentVel

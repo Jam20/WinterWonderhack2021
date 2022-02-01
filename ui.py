@@ -52,25 +52,12 @@ cueImage = pygame.transform.rotate(cueImage, 180)
 
 def drawTable():
     screen.blit(tableImage, (0,0))
-    # pocketPositions = [(2.66,4.5, 7.75), (132.25,0,6.75), (265,4.5,7.75), (2.66,138.75, 7.75), (132.25,140,6.75), (265,138.75,7.75)]    
-    # for pocketPos in pocketPositions:
-    #     pygame.draw.circle(screen, (255,0,0), ((pocketPos[0]-pocketPos[2])*cmToPixels + boardThickness, (pocketPos[1]-pocketPos[2])*cmToPixels + boardThickness), pocketPos[2]*cmToPixels)
-    # wallPositions = [[ (-5.3,   4.25  ),   (0,      9.5   ),   (0,     116.7  ),   (-5.3,  122.5   ) ],
-    #                  [ (259.5,  4.25  ),   (254.3,  9.5   ),   (254.3, 117    ),   (259.5, 123    ) ],
-    #                  [ (8,      -.1   ),   (2.25,   -5.3  ),   (118.2, -5.3   ),   (116,   -.1    ) ],
-    #                  [ (134.75, -.1   ),   (132.25, -5.3  ),   (249.5, -5.3   ),   (243.9, -.1    ) ],
-    #                  [ (134.75, 127.25),   (132.25, 132.4 ),   (249.5, 132.4  ),   (243.9, 127.25 ) ],
-    #                  [ (8.3,    127.25),   (2.75,   132.4 ),   (118.7, 132.4  ),   (116.5, 127.25 ) ]]
-    # for wall in wallPositions:
-    #     mappedWall = []
-    #     for pos in wall:
-    #         mappedWall.append((pos[0]*cmToPixels+boardThickness, pos[1]*cmToPixels+boardThickness))
-    #     pygame.draw.polygon(screen, (255,0,0), mappedWall)
 
 def drawBalls(balls):
     cueBall = enginev2.Ball((0,0),(0,0))
     for ball in balls:
-        screen.blit(images[ball.number], [(ball.pos[0]-ball.radius) * cmToPixels + boardThickness, (ball.pos[1]-ball.radius) * cmToPixels + boardThickness])
+        display_pos = (ball.pos+ball.radius)*cmToPixels+boardThickness
+        screen.blit(images[ball.number], [float(display_pos[0]),float(display_pos[1])])
         cueBall = ball if ball.isCue else cueBall
     return cueBall
 
@@ -81,7 +68,7 @@ def drawCue(currentVel, ball):
     velMag = math.sqrt(pow(currentVel[0],2) + pow(currentVel[1],2))
     velComp = (currentVel[0]/velMag, currentVel[1]/velMag)
 
-    cueTipPos = (ball.pos[0]-.4 + (ball.radius+velMag/10)*velComp[0],ball.pos[1] + (ball.radius+velMag/10)*velComp[1])
+    cueTipPos = (ball.pos[0]+ball.radius*2-.4 + (ball.radius+velMag/10)*velComp[0],ball.pos[1]+ball.radius*2 + (ball.radius+velMag/10)*velComp[1])
     cueAngle = math.atan2((velComp[1]), -velComp[0])*180/math.pi+180
     if cueAngle > 0 and cueAngle <180:
         cueTipPos = (cueTipPos[0], cueTipPos[1]+(509/cmToPixels)*velComp[1])

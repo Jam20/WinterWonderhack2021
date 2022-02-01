@@ -1,16 +1,31 @@
 import math
+from typing import List
 import numpy as np
 
-from xmlrpc.client import MAXINT
+WALLS: np.ndarray = np.array([
+    [[0,      9.5],   [0,     117],   [-5.3,   4.25],   [-5.3,  122.5]],
+    [[254.3,  9.5],   [254.3, 117],   [259.5,  4.25],   [259.5, 123]],
+    [[8,      -.1],   [116,   -.1],   [2.25,   -5.3],   [118.2, -5.3]],
+    [[134.75, -.1],   [243.9, -.1],   [132.25, -5.3],   [249.5, -5.3]],
+    [[8.3,    127.25],   [116.5, 127.25],   [2.75,   132.4],   [118.7, 132.4]],
+    [[134.75, 127.25],   [243.9, 127.25],   [132.25, 132.4],   [249.5, 132.4]],
+])
+POCKETS : np.ndarray = np.array([
+    [2.66,     4.5,     7.75],
+    [132.25,   0,       6.75],
+    [265,      4.5,     7.75],
+    [2.66,     38.75,   7.75],
+    [132.25,   140,     6.75],
+    [265,      138.75,  7.75]
+])
 DECELERATION = .6
 
 
 class Ball:
-    def __init__(self, pos, vel):
+    def __init__(self, pos: tuple[float, float], vel: tuple[float, float]):
         self.radius = 5
-        self.pos = pos
-        self.vel = vel
-
+        self.pos: np.ndarray = np.array(pos, dtype='f')
+        self.vel: np.ndarray = np.array(vel, dtype='f')
 
 
 class Board:
@@ -24,136 +39,102 @@ class Pocket:
     def __init__(self):
         self.radius = 7.75
 
-def updateBall(dt, ball):
-    ball.pos += ball.vel*dt #Update position based on velocity
-    decel = ball.vel*(1-DECELERATION)*dt #Calculate deceleration based on current velocity
-    ball.vel = ball.vel-decel #Update velocity based on amount of deceleration
-    ball.vel = np.zeros(2) if np.abs(ball.vel).sum() < 0.1 else ball.vel #Zero out the velocity if low enough
 
-    
+def update_ball(dt: float, ball: Ball):
+    ball.pos += ball.vel*dt  # Update position based on velocity
+    # Calculate deceleration based on current velocity
+    decel = ball.vel*(1-DECELERATION)*dt
+    ball.vel = ball.vel-decel  # Update velocity based on amount of deceleration
+    # Zero out the velocity if low enough
+    ball.vel = np.zeros(2) if np.abs(ball.vel).sum() < 0.1 else ball.vel
+
+
 def isVert(pointA, pointB):
     return pointA[0] == pointB[0]
 
-def checkWallCollisons(ball):
-    leftWall        = [ (0,      9.5   ),   (0,     117    ),   (-5.3,   4.25  ),   (-5.3,  122.5  ) ]
-    rightWall       = [ (254.3,  9.5   ),   (254.3, 117    ),   (259.5,  4.25  ),   (259.5, 123    ) ]
-    topLeftWall     = [ (8,      -.1   ),   (116,   -.1    ),   (2.25,   -5.3  ),   (118.2, -5.3   ) ]
-    topRightWall    = [ (134.75, -.1   ),   (243.9, -.1    ),   (132.25, -5.3  ),   (249.5, -5.3   ) ]
-    bottomLeftWall  = [ (8.3,    127.25),   (116.5, 127.25 ),   (2.75,   132.4 ),   (118.7, 132.4  ) ] 
-    bottomRightWall = [ (134.75, 127.25),   (243.9, 127.25 ),   (132.25, 132.4 ),   (249.5, 132.4  ) ]
 
-    walls = [leftWall, rightWall, topLeftWall, topRightWall, bottomLeftWall, bottomRightWall]
-
-
-    #Check Rectangular Collisions
-    collideLeft        = ball.pos[0] - ball.radius < leftWall[0][0]        and ball.pos[1] >= leftWall[0][1]        and ball.pos[1] <= leftWall[1][1]
-    collideRight       = ball.pos[0] + ball.radius > rightWall[0][0]       and ball.pos[1] >= rightWall[0][1]       and ball.pos[1] <= rightWall[1][1]
-    collideTopLeft     = ball.pos[1] - ball.radius < topLeftWall[0][1]     and ball.pos[0] >= topLeftWall[0][0]     and ball.pos[0] <= topLeftWall[1][0]
-    collideTopRight    = ball.pos[1] - ball.radius < topRightWall[0][1]    and ball.pos[0] >= topRightWall[0][0]    and ball.pos[0] <= topRightWall[1][0]
-    collideBottomLeft  = ball.pos[1] + ball.radius > bottomLeftWall[0][1]  and ball.pos[0] >= bottomLeftWall[0][0]  and ball.pos[0] <= bottomLeftWall[1][0]
-    collideBottomRight = ball.pos[1] + ball.radius > bottomRightWall[0][1] and ball.pos[0] >= bottomRightWall[0][0] and ball.pos[0] <= bottomRightWall[1][0]
-    
-    verticalCollision   = collideTopRight or collideTopLeft or collideBottomRight or collideBottomLeft
-    horizontalCollision = collideLeft     or collideRight
+def check_wall_collisions(ball: Ball):
+    for wall in WALLS:
+        lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
+        for line in lines:
+            if is_colliding_with_line(ball, line):
+                respond_to_collision(ball, line)
+                return
 
 
-    #Update Velocity
-    ball.vel = (-ball.vel[0], ball.vel[1]) if horizontalCollision else ball.vel
-    ball.vel = (ball.vel[0], -ball.vel[1]) if verticalCollision   else ball.vel
+def respond_to_collision(ball: Ball, line: np.ndarray):
+    #gets the unit vector for the line as well as the unit vector perpendicular to the line
+    line_unit_vector = (line[1]-line[0])/np.linalg.norm(line[1] - line[0])
+    line_unit_orthoNormal = np.array([-line_unit_vector[1], line_unit_vector[0]])
 
-    #Update Position
-    ball.pos = (leftWall[0][0]  + ball.radius, ball.pos[1]) if collideLeft  else ball.pos
-    ball.pos = (rightWall[0][0] - ball.radius, ball.pos[1]) if collideRight else ball.pos
-    ball.pos = (ball.pos[0], topLeftWall[0][1] + ball.radius) if collideTopLeft    or collideTopRight    else ball.pos
-    ball.pos = (ball.pos[0], bottomLeftWall[0][1] - ball.radius) if collideBottomLeft or collideBottomRight else ball.pos
-    
-    #Check Triangular Collisions
-    for wall in walls:
-        c1x = ball.pos[0] - wall[0][0]
-        c1y = ball.pos[1] - wall[0][1]
+    #updates the velocity by flipping it over the line
+    p = ball.vel.dot(line_unit_orthoNormal)
+    ball.vel *= 2*p*line_unit_orthoNormal
+     
 
-        radiusSqr = pow(ball.radius,2)
-        c1sqr = pow(c1x,2) + pow(c1y,2) - radiusSqr
-        
-        e1x = wall[2][0] - wall[0][0]
-        e1y = wall[2][1] - wall[0][1]
-        
-        k = c1x*e1x + c1y+e1y
-        if k>0:
-            len = pow(e1x,2) + pow(e1y,2)
-            if k<len and c1sqr * len <= pow(k,2):
-                ball.vel = (ball.vel[1], ball.vel[0])                
-    for wall in walls:
-        c1x = ball.pos[0] - wall[1][0]
-        c1y = ball.pos[1] - wall[1][1]
+def is_colliding_with_line(ball: Ball, line: np.ndarray):
+    #get the line as a vector
+    lineVector: np.ndarray = line[1] - line[0]
 
-        radiusSqr = pow(ball.radius,2)
-        c1sqr = pow(c1x,2) + pow(c1y,2) - radiusSqr
-        
-        e1x = wall[3][0] - wall[1][0]
-        e1y = wall[3][1] - wall[1][1]
-        
-        k = c1x*e1x + c1y+e1y
-        if k>0:
-            len = pow(e1x,2) + pow(e1y,2)
-            if k<len and c1sqr * len <= pow(k,2):
-                ball.vel = (ball.vel[1], ball.vel[0])                
+    #get coefficients for quadratic equation 
+    a = lineVector.dot(lineVector)
+    b = 2 * lineVector.dot(line[1] - ball.pos)
+    c = line[1].dot(line[1]) + ball.pos.dot(ball.pos) - 2 * \
+        line[1].dot(ball.pos) - ball.radius**2
 
-    
-                    
+    #get discriminant section of quadratic equation if < 0 ball misses completely
+    disc = b**2 - 4 * a * c
+    if disc < 0:
+        return False
+
+    #gets if the section of the line we care about is in the circle
+    disc_sqrt = np.sqrt(disc)
+    t1 = (-b + disc_sqrt) / (2 * a)
+    t2 = (-b - disc_sqrt) / (2 * a)
+    if 0 <= -t1 <= 1 or 0 <= -t2 <= 1:
+        return True
+    else:
+        return False
 
 
-def checkBallCollisions(ball, balls):
-    for otherBall in balls:
-        if(otherBall != ball):
-            ballPos = (ball.pos[0]+ball.radius, ball.pos[1]+ball.radius)
-            otherBallPos = (otherBall.pos[0] + otherBall.radius, otherBall.pos[1] + otherBall.radius)
+def check_ball_collisions(ball: Ball, balls: List[Ball]):
+    for other_ball in balls:
+        if(other_ball != ball):
 
-            dist = ((otherBallPos[0] - ballPos[0]),
-                    otherBallPos[1] - ballPos[1])
+            dist : np.ndarray = other_ball.pos - ball.pos
+            dist_mag = np.linalg.norm(dist).sum()
 
-            distMag = (math.sqrt(pow(dist[0], 2) + pow(dist[1], 2)))
-            if(distMag <= ball.radius*2):
-                overlap = ball.radius*2 - distMag
-                distNormalized = (dist[0]/distMag, dist[1]/distMag)
+            if(dist_mag <= ball.radius*2):
+                overlap = ball.radius*2 - dist_mag
 
-                ballPos = (ballPos[0] - (overlap * distNormalized[0] * .5), ballPos[1] - (overlap * distNormalized[1] * .5))
-                otherBallPos = (otherBallPos[0] + (overlap * distNormalized[0]* .5), otherBallPos[1] + (overlap * distNormalized[1] * .5))
+                unit_dist : np.ndarray = dist/dist_mag
+                ball.pos = ball.pos - (overlap * unit_dist * .5)
+                other_ball.pos = other_ball.pos +  (overlap * unit_dist * .5)
+
+                dist = other_ball.pos - ball.pos
+                dist_mag = np.linalg.norm(dist).sum()
+
+                unit_dist = dist/dist_mag
+                p = np.sum(ball.vel * unit_dist) - np.sum(other_ball.vel * unit_dist)
+
+                ball.vel = ball.vel - p * unit_dist
+                other_ball.vel = other_ball.vel + p * unit_dist
                 
-                dist = ((otherBallPos[0] - ballPos[0]),
-                    otherBallPos[1] - ballPos[1])
 
-                distMag = (math.sqrt(pow(dist[0], 2) + pow(dist[1], 2)))
-            
-                normalx = (otherBallPos[0] - ballPos[0])/distMag
-                normaly = (otherBallPos[1] - ballPos[1])/distMag
-                p = 2 * (ball.vel[0]*normalx + ball.vel[1] * normaly - otherBall.vel[0]* normalx - otherBall.vel[1]*normaly)/4
-                ball.vel = (ball.vel[0] - p*2*normalx, ball.vel[1] - p*2*normaly)
-                otherBall.vel = (otherBall.vel[0] + p*2*normalx, otherBall.vel[1] + p*2*normaly)
-                ball.pos = (ballPos[0] - ball.radius, ballPos[1] - ball.radius)
-                otherBall.pos = (otherBallPos[0] - otherBall.radius, otherBallPos[1] - otherBall.radius)
-
-
-def checkScoredBalls(ball, ballsToRemove):
-    pocketPositions = [(2.66,     4.5,     7.75), #(x,y,r)
-                       (132.25,   0,       6.75),
-                       (265,      4.5,     7.75),
-                       (2.66,     38.75,   7.75),
-                       (132.25,   140,     6.75),
-                       (265,      138.75,  7.75)]
-    for pocket in pocketPositions:
-        dist = math.sqrt(pow(ball.pos[0]-pocket[0],2) + pow(ball.pos[1]-pocket[1],2))
-        if dist<pocket[2]:
+def check_ball_scored(ball, ballsToRemove):
+    for pocket in POCKETS:
+        dist_mag = np.linalg.norm((pocket[:2]-ball.pos))
+        if dist_mag < pocket[2]:
             ballsToRemove.append(ball)
 
 
 def update(dt, balls):
     ballsToRemove = []
     for ball in balls:
-        updateBall(dt, ball)
-        checkWallCollisons(ball)
-        checkBallCollisions(ball, balls)
-        checkScoredBalls(ball, ballsToRemove)
+        update_ball(dt, ball)
+        check_wall_collisions(ball)
+        check_ball_collisions(ball, balls)
+        check_ball_scored(ball, ballsToRemove)
     for ball in ballsToRemove:
         balls.remove(ball)
     return ballsToRemove
