@@ -1,3 +1,4 @@
+import time
 import pygame
 import enginev2
 import random
@@ -44,7 +45,7 @@ for i in range(1,16):
 cueImage = pygame.image.load('assets/ball_16.png')
 cueImage = pygame.transform.scale(cueImage, (constRad*2*cmToPixels,constRad*2*cmToPixels))
 images.insert(0, cueImage)
-tableImage = pygame.image.load('assets/table.png')
+tableImage = pygame.image.load('assets/table.png').convert()
 tableImage = pygame.transform.scale(tableImage, (screenWidth, screenHeight))
 cueImage = pygame.image.load('assets/cue.png')
 cueImage = pygame.transform.rotate(cueImage, 180)
@@ -90,9 +91,8 @@ def render(balls, currentVel = (0,0)):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
-
-    ballsRemoved = enginev2.update(clock.tick(1000)/1000, balls)
-
+    
+    ballsRemoved = enginev2.update(clock.tick(60)/1000, balls)
     screen.fill((0, 0, 0))
     drawTable()
     cueBall = drawBalls(balls)
