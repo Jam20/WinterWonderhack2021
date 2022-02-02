@@ -18,114 +18,152 @@ class UIBall(enginev2.Ball):
         self.isCue = number == 0
         self.isPocketed = False
 
+#gets the correct monitor to determine size
+monitors = get_monitors()
+monitor_number = 1 if len(get_monitors()) > 1 else 0
 
-mnum = 1 if len(get_monitors()) > 1 else 0
-cmToPixels = int(get_monitors()[
-                 mnum].width / (enginev2.BOARD_WIDTH + 2 * enginev2.BOARD_THICKNESS))
-if get_monitors()[mnum].width>2000:
-    cmToPixels = cmToPixels/2
+#obtain the conversion information between engine position and pixels
+engine_width = enginev2.BOARD_WIDTH + enginev2.BOARD_THICKNESS * 2
+cm_to_px = int(monitors[monitor_number].width/engine_width)
 
-boardWidth = cmToPixels * enginev2.BOARD_WIDTH
-boardHeight = cmToPixels * enginev2.BOARD_HEIGHT
-boardThickness = cmToPixels * enginev2.BOARD_THICKNESS
-ballRadius = cmToPixels * enginev2.Ball((0, 0), (0, 0)).radius
-constRad = enginev2.Ball((0, 0), (0, 0)).radius
-screenWidth = boardWidth + boardThickness*2
-screenHeight = boardHeight + boardThickness*2
+#half the conversion if on a high dpi display
+cm_to_px /= 2 if monitors[monitor_number].width > 2000 else 1
 
-screen = pygame.display.set_mode([screenWidth, screenHeight])
+#convert engine measurements to measurements usable by the ui
+board_width     = cm_to_px * enginev2.BOARD_WIDTH
+board_height    = cm_to_px * enginev2.BOARD_HEIGHT
+board_thickness = cm_to_px * enginev2.BOARD_THICKNESS
+ball_radius     = cm_to_px * enginev2.Ball((0, 0), (0, 0)).radius
+
+#get screen size based on converted dimensions
+screen_width  = board_width  + board_thickness * 2
+screen_height = board_height + board_thickness * 2
+
+#initialize screen size
+screen = pygame.display.set_mode([screen_width, screen_height])
+
+
+
+#initalize pygame and set default values
 clock = pygame.time.Clock()
 pygame.init()
 pygame.font.init()
 pygame.display.set_caption("Amazing Pool Bot")
 font = pygame.font.SysFont("Comic Sans MS", 30)
+
+#get images used for the balls in the game
 images = []
 for i in range(1,16):
-    image = pygame.image.load('assets/ball_' + str(i) + '.png')
-    image = pygame.transform.scale(image, (constRad*2*cmToPixels,constRad*2*cmToPixels))
+    image = pygame.image.load('assets/ball_' + str(i) + '.png') #load image from assets folder
+    image = pygame.transform.scale(image, (ball_radius*2,ball_radius*2)) #set image size based on ball radius
     images.append(image)
-cueImage = pygame.image.load('assets/ball_16.png')
-cueImage = pygame.transform.scale(cueImage, (constRad*2*cmToPixels,constRad*2*cmToPixels))
-images.insert(0, cueImage)
-tableImage = pygame.image.load('assets/table.png').convert()
-tableImage = pygame.transform.scale(tableImage, (screenWidth, screenHeight))
-cueImage = pygame.image.load('assets/cue.png')
-cueImage = pygame.transform.rotate(cueImage, 180)
+
+#gets the image for the cue ball and inserts it into the begining of the list
+cue_ball_image = pygame.image.load('assets/ball_16.png')
+cue_ball_image = pygame.transform.scale(cue_ball_image, (ball_radius*2,ball_radius*2))
+images.insert(0, cue_ball_image)
+
+#gets the images for the table and the cue from the assets folder and sizes them based on screen size
+tableImage = pygame.image.load('assets/table.png').convert() #gets the table as a jpeg as it is faster to load and can be filled with black
+tableImage = pygame.transform.scale(tableImage, (screen_width, screen_height))
+cue_image = pygame.image.load('assets/cue.png')
+cue_image = pygame.transform.rotate(cue_image, 180) #flip pool cue as it is facing the wrong direction
+
+#defines pool for multiprocessing
+ui_pool = Pool()
+
+##
+# Displays debug information to enable call in render/reRender function
+##
+def draw_debug_info():
+    for wall in enginev2.WALLS:
+        lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
+        for line in lines:
+            line_pos = line * cm_to_px + board_thickness
+            pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
+
+    for pocket in enginev2.POCKETS:
+        line_pos = pocket*cm_to_px + board_thickness
+        pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
 
-
-
-def drawTable():
+##
+# Draws the table image 
+##
+def draw_table():
     screen.blit(tableImage, (0,0))
-    # for wall in enginev2.WALLS:
-    #     lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
-    #     for line in lines:
-    #         line_pos = line*cmToPixels+boardThickness
-    #         pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
-    # for pocket in enginev2.POCKETS:
-    #     line_pos = pocket*cmToPixels+boardThickness
-    #     pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
+##
+# @returns the arguments to draw @param ball on the screen based on the ball number
+##
 def draw_ball(ball):
-    display_pos = (ball.pos-ball.radius)*cmToPixels+boardThickness
-    screen.blit(images[ball.number], [float(display_pos[0]),float(display_pos[1])])
+    display_pos = ball.pos  * cm_to_px - ball_radius + board_thickness
+    return (images[ball.number], [float(display_pos[0]),float(display_pos[1])])
 
+##
+# Draws all members of @param balls on the screen
+##
+def draw_balls(balls):
+    blits_args = list(map(draw_ball, balls))
+    screen.blits(blits_args)
 
-def drawBalls(balls):
-    cueBall = enginev2.Ball((0,0),(0,0))
-    ui_pool.map(draw_ball, balls)
-    for ball in balls:
-        cueBall = ball if ball.isCue else cueBall
-    
-    return cueBall
-
-def drawCue(currentVel, ball):
-    if currentVel[0] == 0 and currentVel[1] == 0:
+##
+# Draws the cue on the screen around @param ball if @param currentVel > (0,0)
+##
+def draw_cue(current_vel : np.ndarray, ball):
+    if np.max(np.absolute(current_vel)):
         return
     
-    velMag = math.sqrt(pow(currentVel[0],2) + pow(currentVel[1],2))
-    velComp = (currentVel[0]/velMag, currentVel[1]/velMag)
+    vel_mag = np.linalg.norm(current_vel)
+    unit_vel = current_vel / vel_mag
 
-    cueTipPos = (ball.pos[0]-.4 + (ball.radius+velMag/10)*velComp[0],ball.pos[1] + (ball.radius+velMag/10)*velComp[1])
-    cueAngle = math.atan2((velComp[1]), -velComp[0])*180/math.pi+180
-    if cueAngle > 0 and cueAngle <180:
-        cueTipPos = (cueTipPos[0], cueTipPos[1]+(509/cmToPixels)*velComp[1])
-    if cueAngle > 90 and cueAngle < 270: 
-        cueTipPos = (cueTipPos[0]+(509/cmToPixels)*velComp[0], cueTipPos[1])
+    cue_tip_pos = ball.pos + (ball.radius+vel_mag/10) * unit_vel
+    cue_angle = np.arctan2(unit_vel[1], -unit_vel[0]) * (180/np.pi) + 180
+
+    cue_tip_pos = cue_tip_pos + np.array([0, 509/cm_to_px])*unit_vel[1] if 0 < cue_angle < 180 else cue_tip_pos
+    cue_tip_pos = cue_tip_pos + np.array([509/cm_to_px, 0])*unit_vel[1] if 90 < cue_angle < 270 else cue_tip_pos
     
-    angledImg = pygame.transform.rotate(cueImage, cueAngle)
-    screen.blit(angledImg, [boardThickness + cueTipPos[0]*cmToPixels, boardThickness + cueTipPos[1]*cmToPixels])
+    angled_img = pygame.transform.rotate(cue_image, cue_angle)
+    cue_tip_pos = cue_tip_pos*cm_to_px + board_thickness
+    screen.blit(angled_img, [float(cue_tip_pos[0]), float(cue_tip_pos[1])])
 
 
-def render(balls, currentVel = (0,0)):
+##
+# Renders a frame and runs the engine on @param balls including drawing the cue using @param currentVel if given
+##
+def render(balls, currentVel = np.array([0,0])):
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
+
     frame_time_sec = clock.tick(1000)/1000
     engine_results = ui_pool.apply_async(enginev2.update,(frame_time_sec, balls))
     
     screen.fill((0, 0, 0))
-    drawTable()
+    draw_table()
     start_time = time.time()
-    cueBall = drawBalls(balls)
+    cueBall = draw_balls(balls)
     total_time = time.time()-start_time
-    drawCue(currentVel, cueBall)
+    draw_cue(currentVel, cueBall)
     pygame.display.flip()
     
-    updated_balls = engine_results.get()
+    balls = engine_results.get()
     
     print(f"Frame: {str(clock.get_time())} time: {str(total_time*1000)}", end="\r", flush=True)
-    return updated_balls
 
+##
+# Renders a frame with no engine update for use after long period of no engine activity
+##
 def reRender(balls):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
     clock.tick(1000)
     screen.fill((0, 0, 0))
-    drawTable()
-    cueBall = drawBalls(balls)
-    drawCue((0,0), cueBall)
+    draw_table()
+    cueBall = draw_balls(balls)
+    draw_cue(np.array([0,0]), cueBall)
     pygame.display.flip()
 
-ui_pool = Pool()
+
