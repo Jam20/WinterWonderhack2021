@@ -42,7 +42,7 @@ def simulate(simulation):
     usableState.balls[0].vel = np.array(simulation.vel)
     
     while(not game.isTurnDone(usableState)):
-        removed = enginev2.update(0.01, usableState.balls)
+        removed = enginev2.update(1/60, usableState.balls)
         ballsRemovedThisIteration.extend(removed)
 
     isPlayerStripes = False

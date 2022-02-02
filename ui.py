@@ -59,6 +59,9 @@ def drawTable():
     #     for line in lines:
     #         line_pos = line*cmToPixels+boardThickness
     #         pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
+    # for pocket in enginev2.POCKETS:
+    #     line_pos = pocket*cmToPixels+boardThickness
+    #     pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
 
 def drawBalls(balls):

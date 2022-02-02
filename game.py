@@ -149,7 +149,6 @@ def runGame():
        winner = 0
        whoIsStripes = 0
        previousState = copy.deepcopy(mainState)
-       mainState.printState()
        while winner == 0:
               winner = playPlayerTurn(mainState)
               winner = playBotTurn(mainState)

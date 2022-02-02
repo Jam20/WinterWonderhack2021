@@ -10,14 +10,16 @@ WALLS: np.ndarray = np.array([
     [[8.3,    127.25],   [116.5, 127.25],   [2.75,   132.4],   [118.7, 132.4]],
     [[134.75, 127.25],   [243.9, 127.25],   [132.25, 132.4],   [249.5, 132.4]],
 ])
+
 POCKETS : np.ndarray = np.array([
-    [2.66,     4.5,     7.75],
-    [132.25,   0,       6.75],
-    [265,      4.5,     7.75],
-    [2.66,     38.75,   7.75],
-    [132.25,   140,     6.75],
-    [265,      138.75,  7.75]
+    [ [-5.3,   4.25], [2.25,   -5.3]  ],
+    [ [118.2, -5.3 ], [132.25, -5.3]  ],
+    [ [259.5,  4.25], [249.5, -5.3 ]  ],
+    [ [-5.3,  122.5], [2.75,   132.4] ],
+    [ [118.7, 132.4], [132.25, 132.4] ],
+    [ [259.5, 123  ], [249.5, 132.4 ] ],    
 ])
+
 DECELERATION = .2
 
 
@@ -123,8 +125,7 @@ def check_ball_collisions(ball: Ball, balls: List[Ball]):
 
 def check_ball_scored(ball, ballsToRemove):
     for pocket in POCKETS:
-        dist_mag = np.linalg.norm((pocket[:2]-ball.pos))
-        if dist_mag < pocket[2]:
+        if is_colliding_with_line(ball,pocket):
             ballsToRemove.append(ball)
 
 
@@ -134,7 +135,7 @@ def update(dt, balls):
         update_ball(dt, ball)
         check_wall_collisions(ball)
         check_ball_collisions(ball, balls)
-        #check_ball_scored(ball, ballsToRemove)
+        check_ball_scored(ball, ballsToRemove)
     for ball in ballsToRemove:
         balls.remove(ball)
     return ballsToRemove
