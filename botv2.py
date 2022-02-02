@@ -1,6 +1,6 @@
 from copy import deepcopy
 import math
-
+import numpy as np
 import enginev2
 import game
 from multiprocessing import Pool, Manager
@@ -39,7 +39,7 @@ def simulate(simulation):
     usableState = deepcopy(simulation.state)
     ballsRemovedThisIteration = []
     print("Starting simulation with velocity: " + str(simulation.vel), flush=True)
-    usableState.balls[0].vel = simulation.vel
+    usableState.balls[0].vel = np.array(simulation.vel)
     
     while(not game.isTurnDone(usableState)):
         removed = enginev2.update(0.01, usableState.balls)

@@ -18,7 +18,7 @@ POCKETS : np.ndarray = np.array([
     [132.25,   140,     6.75],
     [265,      138.75,  7.75]
 ])
-DECELERATION = .6
+DECELERATION = .2
 
 
 class Ball:
@@ -46,7 +46,7 @@ def update_ball(dt: float, ball: Ball):
     decel = ball.vel*(1-DECELERATION)*dt
     ball.vel = ball.vel-decel  # Update velocity based on amount of deceleration
     # Zero out the velocity if low enough
-    ball.vel = np.zeros(2) if np.abs(ball.vel).sum() < 0.1 else ball.vel
+    ball.vel *= 0.0 if np.abs(ball.vel).sum() < 0.1 else 1.0
 
 
 def isVert(pointA, pointB):
@@ -68,8 +68,8 @@ def respond_to_collision(ball: Ball, line: np.ndarray):
     line_unit_orthoNormal = np.array([-line_unit_vector[1], line_unit_vector[0]])
 
     #updates the velocity by flipping it over the line
-    p = ball.vel.dot(line_unit_orthoNormal)
-    ball.vel *= 2*p*line_unit_orthoNormal
+    p = 2*ball.vel.dot(line_unit_orthoNormal)
+    ball.vel -= p*line_unit_orthoNormal
      
 
 def is_colliding_with_line(ball: Ball, line: np.ndarray):
@@ -78,9 +78,9 @@ def is_colliding_with_line(ball: Ball, line: np.ndarray):
 
     #get coefficients for quadratic equation 
     a = lineVector.dot(lineVector)
-    b = 2 * lineVector.dot(line[1] - ball.pos)
-    c = line[1].dot(line[1]) + ball.pos.dot(ball.pos) - 2 * \
-        line[1].dot(ball.pos) - ball.radius**2
+    b = 2 * lineVector.dot(line[0] - ball.pos)
+    c = line[0].dot(line[0]) + ball.pos.dot(ball.pos) - 2 * \
+        line[0].dot(ball.pos) - ball.radius**2
 
     #get discriminant section of quadratic equation if < 0 ball misses completely
     disc = b**2 - 4 * a * c
@@ -91,7 +91,7 @@ def is_colliding_with_line(ball: Ball, line: np.ndarray):
     disc_sqrt = np.sqrt(disc)
     t1 = (-b + disc_sqrt) / (2 * a)
     t2 = (-b - disc_sqrt) / (2 * a)
-    if 0 <= -t1 <= 1 or 0 <= -t2 <= 1:
+    if 0 <= t1 <= 1 or 0 <= t2 <= 1:
         return True
     else:
         return False
@@ -134,7 +134,7 @@ def update(dt, balls):
         update_ball(dt, ball)
         check_wall_collisions(ball)
         check_ball_collisions(ball, balls)
-        check_ball_scored(ball, ballsToRemove)
+        #check_ball_scored(ball, ballsToRemove)
     for ball in ballsToRemove:
         balls.remove(ball)
     return ballsToRemove

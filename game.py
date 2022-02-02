@@ -14,29 +14,29 @@ class GameState:
         self.isPlayerStripes = False
         self.isCategoryDecided = False
         self.balls = [
-            UIBall(0, (85, 64)),
+              UIBall(0, (85, 64)),
+              
+              UIBall(1, (170, 64)),
 
-            UIBall(1, (170, 64)),
+              UIBall(2, (180, 59)),
+              UIBall(3, (180, 69)),
 
-            UIBall(2, (180, 59)),
-            UIBall(3, (180, 69)),
-            
-            UIBall(4, (190, 54)),
-            UIBall(5, (190, 64)),
-            UIBall(6, (190, 74)),
-            
-            UIBall(7,  (200, 49)),
-            UIBall(8,  (200, 59)),
-            UIBall(9,  (200, 69)),
-            UIBall(10, (200, 79)),
-            
-            UIBall(11,  (210, 44)),
-            UIBall(12,  (210, 54)),
-            UIBall(13,  (210, 64)),
-            UIBall(14,  (210, 74)),
-            UIBall(15,  (210, 84)),
-        ]
-        
+              UIBall(4, (190, 54)),
+              UIBall(5, (190, 64)),
+              UIBall(6, (190, 74)),
+
+              UIBall(7,  (200, 49)),
+              UIBall(8,  (200, 59)),
+              UIBall(9,  (200, 69)),
+              UIBall(10, (200, 79)),
+
+              UIBall(11,  (210, 44)),
+              UIBall(12,  (210, 54)),
+              UIBall(13,  (210, 64)),
+              UIBall(14,  (210, 74)),
+              UIBall(15,  (210, 84)),
+        ]     
+
        def printState(self):
               print('Ball Information:', flush=True)
               for ball in self.balls:

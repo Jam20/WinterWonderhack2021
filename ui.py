@@ -3,6 +3,7 @@ import enginev2
 import random
 from screeninfo import get_monitors
 import math
+import numpy as np
 
 frameTime = pygame.time.get_ticks()
 
@@ -52,11 +53,17 @@ cueImage = pygame.transform.rotate(cueImage, 180)
 
 def drawTable():
     screen.blit(tableImage, (0,0))
+    # for wall in enginev2.WALLS:
+    #     lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
+    #     for line in lines:
+    #         line_pos = line*cmToPixels+boardThickness
+    #         pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
+
 
 def drawBalls(balls):
     cueBall = enginev2.Ball((0,0),(0,0))
     for ball in balls:
-        display_pos = (ball.pos+ball.radius)*cmToPixels+boardThickness
+        display_pos = (ball.pos-ball.radius)*cmToPixels+boardThickness
         screen.blit(images[ball.number], [float(display_pos[0]),float(display_pos[1])])
         cueBall = ball if ball.isCue else cueBall
     return cueBall
@@ -68,7 +75,7 @@ def drawCue(currentVel, ball):
     velMag = math.sqrt(pow(currentVel[0],2) + pow(currentVel[1],2))
     velComp = (currentVel[0]/velMag, currentVel[1]/velMag)
 
-    cueTipPos = (ball.pos[0]+ball.radius*2-.4 + (ball.radius+velMag/10)*velComp[0],ball.pos[1]+ball.radius*2 + (ball.radius+velMag/10)*velComp[1])
+    cueTipPos = (ball.pos[0]-.4 + (ball.radius+velMag/10)*velComp[0],ball.pos[1] + (ball.radius+velMag/10)*velComp[1])
     cueAngle = math.atan2((velComp[1]), -velComp[0])*180/math.pi+180
     if cueAngle > 0 and cueAngle <180:
         cueTipPos = (cueTipPos[0], cueTipPos[1]+(509/cmToPixels)*velComp[1])
