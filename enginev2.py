@@ -20,7 +20,10 @@ POCKETS : np.ndarray = np.array([
     [ [259.5, 123  ], [249.5, 132.4 ] ],    
 ])
 
-DECELERATION = .2
+DECELERATION    = .2
+BOARD_WIDTH     = 254
+BOARD_HEIGHT    = 127
+BOARD_THICKNESS = 29
 
 
 class Ball:
@@ -30,18 +33,11 @@ class Ball:
         self.vel: np.ndarray = np.array(vel, dtype='f')
 
 
-class Board:
-    def __init__(self):
-        self.width = 254
-        self.height = 127
-        self.thickness = 19
 
 
-class Pocket:
-    def __init__(self):
-        self.radius = 7.75
-
-
+##
+# Updates the position and velocity of @param ball based on time difference @param dt
+##
 def update_ball(dt: float, ball: Ball):
     ball.pos += ball.vel*dt  # Update position based on velocity
     # Calculate deceleration based on current velocity
@@ -51,19 +47,21 @@ def update_ball(dt: float, ball: Ball):
     ball.vel *= 0.0 if np.abs(ball.vel).sum() < 0.1 else 1.0
 
 
-def isVert(pointA, pointB):
-    return pointA[0] == pointB[0]
-
-
+##
+# Checks and responds to collisions of @param ball against all possible lines in @const WALLS
+##
 def check_wall_collisions(ball: Ball):
     for wall in WALLS:
-        lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
+        lines = np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
         for line in lines:
             if is_colliding_with_line(ball, line):
                 respond_to_collision(ball, line)
-                return
+                return 
+    
 
-
+##
+# Updates @param Ball given a collision with @param line
+##
 def respond_to_collision(ball: Ball, line: np.ndarray):
     #gets the unit vector for the line as well as the unit vector perpendicular to the line
     line_unit_vector = (line[1]-line[0])/np.linalg.norm(line[1] - line[0])
@@ -72,8 +70,11 @@ def respond_to_collision(ball: Ball, line: np.ndarray):
     #updates the velocity by flipping it over the line
     p = 2*ball.vel.dot(line_unit_orthoNormal)
     ball.vel -= p*line_unit_orthoNormal
+    
      
-
+##
+# @returns True if @param ball is colliding with @param line
+##
 def is_colliding_with_line(ball: Ball, line: np.ndarray):
     #get the line as a vector
     lineVector: np.ndarray = line[1] - line[0]
@@ -98,7 +99,9 @@ def is_colliding_with_line(ball: Ball, line: np.ndarray):
     else:
         return False
 
-
+##
+# Updates @param ball and any colliding ball in @param balls if the two balls are colliding
+##
 def check_ball_collisions(ball: Ball, balls: List[Ball]):
     for other_ball in balls:
         if(other_ball != ball):
@@ -123,19 +126,26 @@ def check_ball_collisions(ball: Ball, balls: List[Ball]):
                 other_ball.vel = other_ball.vel + p * unit_dist
                 
 
-def check_ball_scored(ball, ballsToRemove):
+##
+# Returns true if the ball has been scored
+##
+def is_ball_scored(ball):
+    
     for pocket in POCKETS:
         if is_colliding_with_line(ball,pocket):
-            ballsToRemove.append(ball)
+            return True
+    return False
 
-
+##
+# Updates the @param balls based on a time differential @param dt including ball and wall collision detection/resolution
+##
 def update(dt, balls):
-    ballsToRemove = []
+    
     for ball in balls:
         update_ball(dt, ball)
         check_wall_collisions(ball)
         check_ball_collisions(ball, balls)
-        check_ball_scored(ball, ballsToRemove)
-    for ball in ballsToRemove:
-        balls.remove(ball)
-    return ballsToRemove
+
+    balls = [ball for ball in balls if not is_ball_scored(ball)]
+
+    return balls

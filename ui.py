@@ -21,13 +21,13 @@ class UIBall(enginev2.Ball):
 
 mnum = 1 if len(get_monitors()) > 1 else 0
 cmToPixels = int(get_monitors()[
-                 mnum].width / (enginev2.Board().width + 2 * enginev2.Board().thickness))
+                 mnum].width / (enginev2.BOARD_WIDTH + 2 * enginev2.BOARD_THICKNESS))
 if get_monitors()[mnum].width>2000:
     cmToPixels = cmToPixels/2
 
-boardWidth = cmToPixels * enginev2.Board().width
-boardHeight = cmToPixels * enginev2.Board().height
-boardThickness = cmToPixels * enginev2.Board().thickness
+boardWidth = cmToPixels * enginev2.BOARD_WIDTH
+boardHeight = cmToPixels * enginev2.BOARD_HEIGHT
+boardThickness = cmToPixels * enginev2.BOARD_THICKNESS
 ballRadius = cmToPixels * enginev2.Ball((0, 0), (0, 0)).radius
 constRad = enginev2.Ball((0, 0), (0, 0)).radius
 screenWidth = boardWidth + boardThickness*2
@@ -101,22 +101,21 @@ def render(balls, currentVel = (0,0)):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
-    display_balls = deepcopy(balls)
     frame_time_sec = clock.tick(1000)/1000
     engine_results = ui_pool.apply_async(enginev2.update,(frame_time_sec, balls))
     
     screen.fill((0, 0, 0))
     drawTable()
     start_time = time.time()
-    cueBall = drawBalls(display_balls)
+    cueBall = drawBalls(balls)
     total_time = time.time()-start_time
     drawCue(currentVel, cueBall)
     pygame.display.flip()
     
-    ballsRemoved = engine_results.get()
+    updated_balls = engine_results.get()
     
     print(f"Frame: {str(clock.get_time())} time: {str(total_time*1000)}", end="\r", flush=True)
-    return ballsRemoved
+    return updated_balls
 
 def reRender(balls):
     for event in pygame.event.get():
