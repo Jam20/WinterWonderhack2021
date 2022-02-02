@@ -41,11 +41,13 @@ class GameState:
               print('Ball Information:', flush=True)
               for ball in self.balls:
                      print('Ball ', str(ball.number), ': Pos ', str(ball.pos), ", Vel ", str(ball.vel), end="\r\n", flush=True)
-
-def runTurn(state, cueVel):
+##
+# Sets the velocity of the cue ball to @param cue_vel
+##
+def run_turn(state, cue_vel):
        ballsRemovedThisTurn = []
        for ball in state.balls:
-              ball.vel = np.array(cueVel) if ball.isCue else ball.vel
+              ball.vel = np.array(cue_vel) if ball.isCue else ball.vel
 
               while not isTurnDone(state):
                      removedBalls = ui.render(state.balls)
@@ -89,7 +91,7 @@ def getPlayerVel(state):
 
 def playPlayerTurn(state):
        cueVel = getPlayerVel(state)
-       ballsRemoved = runTurn(state, cueVel)
+       ballsRemoved = run_turn(state, cueVel)
        if len(ballsRemoved) > 0:
               if not state.isCategoryDecided:
                      state.isPlayerStripes = ballsRemoved[0].isStripped
@@ -119,10 +121,10 @@ def playBotTurn(state):
        ui.reRender(state.balls)
        if len(botTurn) > 0:
               print("FOUND BOT VEL: " + str(botTurn[0]))
-              ballsRemoved = runTurn(state, botTurn[0])
+              ballsRemoved = run_turn(state, botTurn[0])
        else:
               print("NO BOT VEL FOUND")
-              ballsRemoved = runTurn(state, (200,0))
+              ballsRemoved = run_turn(state, (200,0))
        if len(ballsRemoved) > 0:
               if not state.isCategoryDecided:
                      state.isPlayerStripes = not ballsRemoved[0].isStripped
