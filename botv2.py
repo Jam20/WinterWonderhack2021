@@ -3,7 +3,7 @@ import math
 import numpy as np
 import enginev2
 import game
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool
 
 
 class simulation:

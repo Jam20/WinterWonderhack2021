@@ -40,7 +40,7 @@ class GameState:
        def printState(self):
               print('Ball Information:', flush=True)
               for ball in self.balls:
-                     print('Ball ', str(ball.number), ': Pos ', str(ball.pos), ", Vel ", str(ball.vel), flush=True)
+                     print('Ball ', str(ball.number), ': Pos ', str(ball.pos), ", Vel ", str(ball.vel), end="\r\n", flush=True)
 
 def runTurn(state, cueVel):
        ballsRemovedThisTurn = []

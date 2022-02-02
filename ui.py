@@ -1,3 +1,4 @@
+from copy import deepcopy
 import time
 import pygame
 import enginev2
@@ -5,6 +6,7 @@ import random
 from screeninfo import get_monitors
 import math
 import numpy as np
+from multiprocessing import Pool
 
 frameTime = pygame.time.get_ticks()
 
@@ -52,6 +54,7 @@ cueImage = pygame.transform.rotate(cueImage, 180)
 
 
 
+
 def drawTable():
     screen.blit(tableImage, (0,0))
     # for wall in enginev2.WALLS:
@@ -63,13 +66,17 @@ def drawTable():
     #     line_pos = pocket*cmToPixels+boardThickness
     #     pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
+def draw_ball(ball):
+    display_pos = (ball.pos-ball.radius)*cmToPixels+boardThickness
+    screen.blit(images[ball.number], [float(display_pos[0]),float(display_pos[1])])
+
 
 def drawBalls(balls):
     cueBall = enginev2.Ball((0,0),(0,0))
+    ui_pool.map(draw_ball, balls)
     for ball in balls:
-        display_pos = (ball.pos-ball.radius)*cmToPixels+boardThickness
-        screen.blit(images[ball.number], [float(display_pos[0]),float(display_pos[1])])
         cueBall = ball if ball.isCue else cueBall
+    
     return cueBall
 
 def drawCue(currentVel, ball):
@@ -94,13 +101,21 @@ def render(balls, currentVel = (0,0)):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
+    display_balls = deepcopy(balls)
+    frame_time_sec = clock.tick(1000)/1000
+    engine_results = ui_pool.apply_async(enginev2.update,(frame_time_sec, balls))
     
-    ballsRemoved = enginev2.update(clock.tick(60)/1000, balls)
     screen.fill((0, 0, 0))
     drawTable()
-    cueBall = drawBalls(balls)
+    start_time = time.time()
+    cueBall = drawBalls(display_balls)
+    total_time = time.time()-start_time
     drawCue(currentVel, cueBall)
     pygame.display.flip()
+    
+    ballsRemoved = engine_results.get()
+    
+    print(f"Frame: {str(clock.get_time())} time: {str(total_time*1000)}", end="\r", flush=True)
     return ballsRemoved
 
 def reRender(balls):
@@ -113,3 +128,5 @@ def reRender(balls):
     cueBall = drawBalls(balls)
     drawCue((0,0), cueBall)
     pygame.display.flip()
+
+ui_pool = Pool()
