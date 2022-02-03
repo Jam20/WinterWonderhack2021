@@ -1,3 +1,3 @@
 import game
 
-game.runGame()
+game.run_game()

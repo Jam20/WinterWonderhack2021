@@ -17,7 +17,7 @@ def getBestMove(state):
     cueIdx = -1
     
     for ball in state.balls:
-        if ball.isCue:
+        if ball.is_cue:
             cueIdx = state.balls.index(ball)
     state.balls[cueIdx], state.balls[0] = state.balls[0], state.balls[cueIdx]
     
@@ -41,16 +41,16 @@ def simulate(simulation):
     print("Starting simulation with velocity: " + str(simulation.vel), flush=True)
     usableState.balls[0].vel = np.array(simulation.vel)
     
-    while(not game.isTurnDone(usableState)):
+    while(not game.is_turn_done(usableState)):
         removed = enginev2.update(1/60, usableState.balls)
         ballsRemovedThisIteration.extend(removed)
 
-    isPlayerStripes = False
-    if simulation.state.isCategoryDecided:
-        isPlayerStripes = simulation.state.isPlayerStripes
+    is_player_stripes = False
+    if simulation.state.is_category_decided:
+        is_player_stripes = simulation.state.is_player_stripes
     else:
         if len(ballsRemovedThisIteration) > 0:
-            isPlayerStripes = not ballsRemovedThisIteration[0].isStripped
+            is_player_stripes = not ballsRemovedThisIteration[0].is_stripped
         else:
             return 0
 
@@ -62,14 +62,14 @@ def simulate(simulation):
     timeForEight = False
 
     for ball in usableState.balls:
-        if not ball.isStripped == isPlayerStripes and not ball.number == 8 and not ball.isCue:
+        if not ball.is_stripped == is_player_stripes and not ball.number == 8 and not ball.is_cue:
             timeForEight = True
 
     for ball in ballsRemovedThisIteration:
-        scratch = ball.isCue
+        scratch = ball.is_cue
         loss = ball.number == 8
         loss = False if timeForEight else loss
-        if ball.isStripped == isPlayerStripes:
+        if ball.is_stripped == is_player_stripes:
             otherCatagoryBallsRemoved += 1
         else:
             sameCatagoryBallsRemoved += 1
@@ -81,14 +81,15 @@ def simulate(simulation):
 def getMoves(state):
     velList = []
     for ball in state.balls:
-        if (state.isCategoryDecided and ball.isStripped == state.isPlayerStripes) or ball.isCue:
+        if (state.is_category_decided and ball.is_stripped == state.is_player_stripes) or ball.is_cue:
                 continue
         cueVel = checkScore(state,ball)
         if cueVel[0] >0 or cueVel[1] > 0:
-            if simulate(simulation(state, cueVel)) > 0:
-                velList.append(cueVel)
-            else:
-                velList.append(cueVel)
+            velList.append(cueVel)
+    #         if simulate(simulation(state, cueVel)) > 0:
+    #             velList.append(cueVel)
+    #         else:
+    #             velList.append(cueVel)
     return velList
 
 def checkScore(state, ball):
@@ -134,7 +135,7 @@ def simulateCollisions(vel):
 
 def backPropegate(state, ball, pos, vel):
     print(f"Attempting to send ball {str(ball.number)} at velocity {str(vel)}")
-    if ball.isCue:
+    if ball.is_cue:
         return vel
     elif len(state.balls) == 0:
         return (0,0)

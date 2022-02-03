@@ -1,4 +1,5 @@
 import copy
+from unicodedata import category
 from screeninfo import get_monitors
 import ui
 from ui import UIBall
@@ -11,8 +12,8 @@ MAX_VEL = 300
 
 class GameState:
        def __init__(self):
-        self.isPlayerStripes = False
-        self.isCategoryDecided = False
+        self.is_player_stripes = False
+        self.is_category_decided = False
         self.balls = [
               UIBall(0, (85, 64)),
               
@@ -37,7 +38,7 @@ class GameState:
               UIBall(15,  (210, 84)),
         ]     
 
-       def printState(self):
+       def print_state(self):
               print('Ball Information:', flush=True)
               for ball in self.balls:
                      print('Ball ', str(ball.number), ': Pos ', str(ball.pos), ", Vel ", str(ball.vel), end="\r\n", flush=True)
@@ -45,115 +46,134 @@ class GameState:
 # Sets the velocity of the cue ball to @param cue_vel
 ##
 def run_turn(state, cue_vel):
-       ballsRemovedThisTurn = []
        for ball in state.balls:
-              ball.vel = np.array(cue_vel) if ball.isCue else ball.vel
+              ball.vel = np.array(cue_vel) if ball.is_cue else ball.vel
 
-              while not isTurnDone(state):
-                     removedBalls = ui.render(state.balls)
-                     ballsRemovedThisTurn.extend(removedBalls)
+              while not is_turn_done(state):
+                     ui.render(state.balls)
                      #state.printState()
-       return ballsRemovedThisTurn
-def isTurnDone(state):
+
+##
+# @returns true if the current turn in the @state is complete aka all velocities are zero
+##
+def is_turn_done(state):
        for ball in state.balls:
-              if abs(ball.vel[0]) > 0 or abs(ball.vel[1]) > 0:
+              if np.max(np.abs(ball.vel)) > 0:
                      return False
        return True
 
-def getPlayerVel(state):
-       cueBall = [ball for ball in state.balls if ball.isCue][0]
-       leftMouse = pygame.mouse.get_pressed()[0] == 1
-       while not leftMouse:
-              mousePos = pygame.mouse.get_pos()
-              mouseDist = (mousePos[0]-(cueBall.pos[0]*ui.cmToPixels+ui.boardThickness), mousePos[1]- (cueBall.pos[1]*ui.cmToPixels + ui.boardThickness))
-              distMag = math.sqrt(pow(mouseDist[0], 2) + pow(mouseDist[1], 2))
-              currentVel = (mouseDist[0]/distMag, mouseDist[1]/distMag)
-              ui.render(state.balls, currentVel)
-              leftMouse = pygame.mouse.get_pressed()[0] == 1
+##
+# Handles getting the velocity from the user and rendering the screen while waiting
+##
+def get_player_vel(state):
+       cue_ball = [ball for ball in state.balls if ball.is_cue][0]
+       is_left_mouse_pressed = pygame.mouse.get_pressed()[0] == 1
+       current_vel = get_unit_vel(cue_ball)
+       while not is_left_mouse_pressed:
+              current_vel = get_unit_vel(cue_ball)
+              ui.render(state.balls, current_vel)
+              is_left_mouse_pressed = pygame.mouse.get_pressed()[0] == 1
+       
        initTime = time.perf_counter()
-       timeElapsed = time.perf_counter()-initTime
-       currentVel = (0,0)
-       while leftMouse:
-              mousePos = pygame.mouse.get_pos()
-              mouseDist = (mousePos[0]-(cueBall.pos[0]*ui.cmToPixels+ui.boardThickness), mousePos[1]- (cueBall.pos[1]*ui.cmToPixels + ui.boardThickness))
-              distMag = math.sqrt(pow(mouseDist[0], 2) + pow(mouseDist[1], 2))
-              currentVel = (mouseDist[0]/distMag, mouseDist[1]/distMag)
-              power = timeElapsed/3 * MAX_VEL
-              currentVel = (currentVel[0] * power, currentVel[1] * power)
-              ui.render(state.balls, currentVel)
-              timeElapsed = time.perf_counter()-initTime
-              timeElapsed = 3 if timeElapsed>3 else timeElapsed
-              leftMouse = pygame.mouse.get_pressed()[0] == 1
+       time_elapsed = time.perf_counter()-initTime
 
-       currentVel = (currentVel[0]*math.cos(math.pi) - currentVel[1]*math.sin(math.pi)
-                    ,currentVel[0]*math.sin(math.pi) + currentVel[1]*math.cos(math.pi))
-       return currentVel
+       while is_left_mouse_pressed:
+              current_vel = get_unit_vel(cue_ball)
+              time_elapsed = time.perf_counter()-initTime
+              time_elapsed = 3 if time_elapsed>3 else time_elapsed
+              power = time_elapsed/3 * MAX_VEL
+              current_vel *= power
+              
+              ui.render(state.balls, current_vel)
 
-def playPlayerTurn(state):
-       cueVel = getPlayerVel(state)
-       ballsRemoved = run_turn(state, cueVel)
-       if len(ballsRemoved) > 0:
-              if not state.isCategoryDecided:
-                     state.isPlayerStripes = ballsRemoved[0].isStripped
-                     state.isCategoryDecided = True
-              scratch = False
-              for ball in ballsRemoved:
-                     if ball.isCue:
+              
+              is_left_mouse_pressed = pygame.mouse.get_pressed()[0] == 1
+
+       return current_vel
+
+##
+# @returns the unit velocity based on the mouse position and the position of the cue ball
+##
+def get_unit_vel(cue_ball):
+       mouse_pos = np.array(pygame.mouse.get_pos())
+       dist = cue_ball.pos*ui.cm_to_px - mouse_pos + ui.board_thickness
+       dist_mag = np.linalg.norm(dist)
+       return dist/dist_mag
+
+##
+# Handles the player's turn given @param state @returns 1 if player has won 2 if the bot has won and 0 if the game should continue
+##
+def play_player_turn(state):
+       cue_ball_vel = get_player_vel(state)
+       old_balls = copy.copy(state.balls)
+       run_turn(state, cue_ball_vel)
+       balls_removed = [ball for ball in old_balls if ball not in state.balls]
+
+       if len(balls_removed) > 0:
+              #selects a category based on the first ball scored
+              if not state.is_category_decided:
+                     state.is_player_stripes = balls_removed[0].is_stripped
+                     state.is_category_decided = True
+
+              category_balls = [ball for ball in state.balls if state.is_player_stripes == ball.is_stripped and not ball.number == 8 and not ball.is_cue]
+
+              #modifies state based on results of the turn
+              for ball in balls_removed:
+                     if ball.is_cue:
                             state.balls.append(UIBall(0, (85,64)))
-                            scratch = True
-                            return 0
+                            
+                            return 2 if len(category_balls) == 0 else 0 
                      if ball.number == 8:
+                            if len(category_balls) == 0 and balls_removed[-1] == ball:
+                                   return 1
                             return 2
-              if not scratch and state.isPlayerStripes == ballsRemoved[0].isStripped:
-                     playPlayerTurn(state)
-       hasWon = True
-       if not state.isCategoryDecided:
-              return 0
-       for ball in state.balls:
-              if ball.isStripped == state.isPlayerStripes and not ball.isCue:
-                     hasWon = False
-              if ball.number == 8:
-                     hasWon = False
-       return 1 if hasWon else 0
+              if state.is_player_stripes == balls_removed[0].is_stripped:
+                     play_player_turn(state)
 
-def playBotTurn(state):
-       botTurn = botv2.getMoves(state)
+def play_bot_turn(state):
+       cue_vel = botv2.getMoves(state)
+       old_balls = copy.copy(state.balls)
+
        ui.reRender(state.balls)
-       if len(botTurn) > 0:
-              print("FOUND BOT VEL: " + str(botTurn[0]))
-              ballsRemoved = run_turn(state, botTurn[0])
+       
+       if len(cue_vel) > 0:
+              print("FOUND BOT VEL: " + str(cue_vel[0]))
+              run_turn(state, cue_vel[0])
        else:
               print("NO BOT VEL FOUND")
-              ballsRemoved = run_turn(state, (200,0))
-       if len(ballsRemoved) > 0:
-              if not state.isCategoryDecided:
-                     state.isPlayerStripes = not ballsRemoved[0].isStripped
-                     state.isCategoryDecided = True
-              for ball in ballsRemoved:
-                     if ball.isCue:
-                            state.balls.append(UIBall(0, (85,64)))
-                            return
-              if not (state.isPlayerStripes == ballsRemoved[0].isStripped):
-                     playBotTurn(state)
-       hasWon = True
-       if not state.isCategoryDecided:
-              return 0
-       for ball in state.balls:
-              if not ball.isStripped == state.isPlayerStripes and not ball.isCue:
-                     hasWon = False
-              if ball.number == 8:
-                     hasWon = False
-       return 2 if hasWon else 0
+              run_turn(state, (200,0))
+
+       balls_removed = [ball for ball in old_balls if ball not in state.balls]
+       
+       if len(balls_removed) > 0:
+
+              #selects a category based on the first ball scored
+              if not state.is_category_decided:
+                     state.is_player_stripes = not balls_removed[0].is_stripped
+                     state.is_category_decided = True
+
+              category_balls = [ball for ball in state.balls if state.is_player_stripes == ball.is_stripped and not ball.number == 8 and not ball.is_cue]
+
+              for ball in balls_removed:
+                     if ball.is_cue:
+                            state.balls.append(UIBall(0, (85,64)))       
+                            return 1 if len(category_balls) == 0 else 0
+                     if ball.number == 8:
+                            if len(category_balls) == 0 and balls_removed[-1] == ball:
+                                   return 2
+                            return 1
+
+              if state.is_player_stripes == balls_removed[0].is_stripped:
+                     play_bot_turn(state)
+
            
 
-def runGame():
-       mainState = GameState()
+def run_game():
+       main_state = GameState()
        winner = 0
-       whoIsStripes = 0
-       previousState = copy.deepcopy(mainState)
        while winner == 0:
-              winner = playPlayerTurn(mainState)
-              winner = playBotTurn(mainState)
+              winner = play_player_turn(main_state)
+              winner = play_bot_turn(main_state)
        if winner == 1:
               print("YOU WIN GOOD JOB")
        else:

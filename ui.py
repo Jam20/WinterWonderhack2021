@@ -6,7 +6,7 @@ import random
 from screeninfo import get_monitors
 import math
 import numpy as np
-from multiprocessing import Pool
+import threading
 
 frameTime = pygame.time.get_ticks()
 
@@ -14,9 +14,8 @@ class UIBall(enginev2.Ball):
     def __init__(self, number, pos, vel = (0,0)):
         enginev2.Ball.__init__(self, pos, vel)
         self.number = number
-        self.isStripped = number>8
-        self.isCue = number == 0
-        self.isPocketed = False
+        self.is_stripped = number>8
+        self.is_cue = number == 0
 
 #gets the correct monitor to determine size
 monitors = get_monitors()
@@ -70,7 +69,6 @@ cue_image = pygame.image.load('assets/cue.png')
 cue_image = pygame.transform.rotate(cue_image, 180) #flip pool cue as it is facing the wrong direction
 
 #defines pool for multiprocessing
-ui_pool = Pool()
 
 ##
 # Displays debug information to enable call in render/reRender function
@@ -108,20 +106,21 @@ def draw_balls(balls):
     screen.blits(blits_args)
 
 ##
-# Draws the cue on the screen around @param ball if @param currentVel > (0,0)
+# Draws the cue on the screen around the cue ball if @param currentVel > (0,0)
 ##
-def draw_cue(current_vel : np.ndarray, ball):
-    if np.max(np.absolute(current_vel)):
+def draw_cue(current_vel : np.ndarray, balls): 
+    if  np.max(np.absolute(current_vel)) == 0:
         return
     
+    cue_ball = [ ball for ball in balls if ball.is_cue][0]
     vel_mag = np.linalg.norm(current_vel)
-    unit_vel = current_vel / vel_mag
+    unit_vel = -current_vel / vel_mag
 
-    cue_tip_pos = ball.pos + (ball.radius+vel_mag/10) * unit_vel
-    cue_angle = np.arctan2(unit_vel[1], -unit_vel[0]) * (180/np.pi) + 180
+    cue_tip_pos = cue_ball.pos + (cue_ball.radius+vel_mag/10) * unit_vel
+    cue_angle = math.atan2(unit_vel[1], -unit_vel[0]) * (180/np.pi) + 180
 
-    cue_tip_pos = cue_tip_pos + np.array([0, 509/cm_to_px])*unit_vel[1] if 0 < cue_angle < 180 else cue_tip_pos
-    cue_tip_pos = cue_tip_pos + np.array([509/cm_to_px, 0])*unit_vel[1] if 90 < cue_angle < 270 else cue_tip_pos
+    cue_tip_pos = cue_tip_pos + np.array([0, 509/cm_to_px])*unit_vel if 0 < cue_angle < 180 else cue_tip_pos
+    cue_tip_pos = cue_tip_pos + np.array([509/cm_to_px, 0])*unit_vel if 90 < cue_angle < 270 else cue_tip_pos
     
     angled_img = pygame.transform.rotate(cue_image, cue_angle)
     cue_tip_pos = cue_tip_pos*cm_to_px + board_thickness
@@ -136,21 +135,19 @@ def render(balls, currentVel = np.array([0,0])):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
-
+    start_time = time.time()
     frame_time_sec = clock.tick(1000)/1000
-    engine_results = ui_pool.apply_async(enginev2.update,(frame_time_sec, balls))
-    
+    x = threading.Thread(target=enginev2.update, args=(frame_time_sec, balls))
+    x.start()
     screen.fill((0, 0, 0))
     draw_table()
-    start_time = time.time()
     cueBall = draw_balls(balls)
-    total_time = time.time()-start_time
-    draw_cue(currentVel, cueBall)
+    
+    draw_cue(currentVel, balls)
+    #draw_debug_info()
     pygame.display.flip()
-    
-    balls = engine_results.get()
-    
-    print(f"Frame: {str(clock.get_time())} time: {str(total_time*1000)}", end="\r", flush=True)
+    x.join()
+
 
 ##
 # Renders a frame with no engine update for use after long period of no engine activity

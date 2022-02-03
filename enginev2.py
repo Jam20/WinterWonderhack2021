@@ -1,4 +1,5 @@
 import math
+from multiprocessing import Value
 from typing import List
 import numpy as np
 
@@ -23,7 +24,7 @@ POCKETS : np.ndarray = np.array([
 DECELERATION    = .2
 BOARD_WIDTH     = 254
 BOARD_HEIGHT    = 127
-BOARD_THICKNESS = 29
+BOARD_THICKNESS = 19
 
 
 class Ball:
@@ -139,13 +140,17 @@ def is_ball_scored(ball):
 ##
 # Updates the @param balls based on a time differential @param dt including ball and wall collision detection/resolution
 ##
-def update(dt, balls):
-    
+def update(dt, balls, pipe = None):
+     
+    balls_to_remove = []
     for ball in balls:
         update_ball(dt, ball)
         check_wall_collisions(ball)
         check_ball_collisions(ball, balls)
-
-    balls = [ball for ball in balls if not is_ball_scored(ball)]
-
+        if is_ball_scored(ball):
+            balls_to_remove.append(ball)
+    for ball in balls_to_remove:
+        balls.remove(ball)
+    if not pipe == None:
+        pipe.send(balls)
     return balls
