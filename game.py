@@ -152,7 +152,7 @@ def play_bot_turn(state):
                      state.is_player_stripes = not balls_removed[0].is_stripped
                      state.is_category_decided = True
 
-              category_balls = [ball for ball in state.balls if state.is_player_stripes == ball.is_stripped and not ball.number == 8 and not ball.is_cue]
+              category_balls = [ball for ball in state.balls if not state.is_player_stripes == ball.is_stripped and not ball.number == 8 and not ball.is_cue]
 
               for ball in balls_removed:
                      if ball.is_cue:
