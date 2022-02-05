@@ -2,7 +2,6 @@ from copy import deepcopy
 import time
 import pygame
 import enginev2
-import random
 from screeninfo import get_monitors
 import math
 import numpy as np
@@ -73,7 +72,7 @@ cue_image = pygame.transform.rotate(cue_image, 180) #flip pool cue as it is faci
 ##
 # Displays debug information to enable call in render/reRender function
 ##
-def draw_debug_info():
+def draw_debug_info(debug_info):
     for wall in enginev2.WALLS:
         lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
         for line in lines:
@@ -82,6 +81,10 @@ def draw_debug_info():
 
     for pocket in enginev2.POCKETS:
         line_pos = pocket*cm_to_px + board_thickness
+        pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
+
+    for line in debug_info:
+        line_pos = line*cm_to_px + board_thickness
         pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
 
@@ -152,7 +155,7 @@ def render(balls, currentVel = np.array([0,0])):
 ##
 # Renders a frame with no engine update for use after long period of no engine activity
 ##
-def reRender(balls):
+def reRender(balls, debug_info = None):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
@@ -161,6 +164,11 @@ def reRender(balls):
     draw_table()
     cueBall = draw_balls(balls)
     draw_cue(np.array([0,0]), cueBall)
+    if not debug_info == None:
+        draw_debug_info(debug_info)
+
     pygame.display.flip()
+
+
 
 

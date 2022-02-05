@@ -6,8 +6,9 @@ import numpy as np
 import enginev2
 import game
 from multiprocessing import Pool
-
-from ui import UIBall
+import time
+from ui import UIBall, reRender
+import ui
 
 
 class simulation:
@@ -105,19 +106,16 @@ def getMoves(state):
         cue_vel = check_score(state,ball)
         if len(cue_vel) > 0:
             vel_list.extend(cue_vel)
-    #         if simulate(simulation(state, cueVel)) > 0:
-    #             velList.append(cueVel)
-    #         else:
-    #             velList.append(cueVel)
+
     simulations = map(lambda vel : simulation(state,vel), vel_list)
-    with Pool() as pool:
-        results = pool.map(simulate, simulations)
-    working_vels = []
-    for idx, vel in enumerate(vel_list):
-        if results[idx] > 0:
-            working_vels.append(vel)
+    # with Pool() as pool:
+    #     results = pool.map(simulate, simulations)
+    # working_vels = []
+    # for idx, vel in enumerate(vel_list):
+    #     if results[idx] > 0:
+    #         working_vels.append(vel)
     
-    return working_vels
+    return vel_list
 
 def check_score(state, ball : UIBall):
 
@@ -131,7 +129,7 @@ def check_score(state, ball : UIBall):
         pocket_len = (pocket[0]-pocket[1])
         pocket_len_mag = np.linalg.norm(pocket_len)
         pocket_unit_vec = pocket_len/pocket_len_mag
-        pocket_center = pocket[0] + pocket_unit_vec*0.5*pocket_len_mag
+        pocket_center = pocket[1] + pocket_unit_vec*0.5*pocket_len_mag
         pocket_orthoNormal = rotate(pocket_unit_vec,math.pi/2)
 
         #determine distance from pocket
@@ -140,13 +138,13 @@ def check_score(state, ball : UIBall):
         
         dot = dist_from_center.dot(pocket_orthoNormal)/(np.linalg.norm(dist_from_center) * np.linalg.norm(pocket_orthoNormal))
         angle = math.acos(dot) * 180/math.pi
-
-        if abs(angle)<20:
-            usable_state.balls = [usable_ball for usable_ball in usable_state.balls if not usable_ball.number == ball.number]
-            cue_vels = back_propegate(usable_state, ball, pocket_center, unit_dist * 5)
-            if len(cue_vels)>0:
-                print(f"Sending ball {str(ball.number)} to pocket at {str(pocket_center)}")
-                found_vels.extend(cue_vels)
+        
+        
+        usable_state.balls = [usable_ball for usable_ball in usable_state.balls if not usable_ball.number == ball.number]
+        cue_vels = back_propegate(usable_state, ball, pocket_center, unit_dist * 5)
+        if len(cue_vels)>0:
+            print(f"Sending ball {str(ball.number)} to pocket at {str(pocket_center)}")
+            found_vels.extend(cue_vels)
 
     return found_vels
 
@@ -154,6 +152,10 @@ def check_score(state, ball : UIBall):
 # returns the velocity that the cue needs to be hit at in order to send @param ball to @param pos arriving with @param vel from @param state
 ##
 def back_propegate(state, ball : UIBall, pos : np.ndarray, vel : np.ndarray):
+    debug_info = [np.array([pos, ball.pos])]
+    print(f"Sending ball: {str(ball.number)} to pos {str(pos)} arriving with velocity {str(vel)}")
+    ui.reRender(state.balls, debug_info)
+    #time.sleep(5)
     dist = ball.pos - pos
     dist_mag = np.linalg.norm(dist)
     required_vel = get_vel_for_dist(dist_mag, vel)
@@ -163,15 +165,39 @@ def back_propegate(state, ball : UIBall, pos : np.ndarray, vel : np.ndarray):
         return [required_vel]
 
     possible_velocities, possible_positions = simulate_collisions(required_vel)
+    debug_info  = map(lambda x: np.array([ball.pos, x + ball.pos]), possible_positions)
+    ui.reRender(state.balls, debug_info)
+    #time.sleep(5)
     found_vels : List[np.ndarray] = []
+
+    for other_ball in state.balls:
+        for idx, possible_velocity in enumerate(possible_velocities):
+            unit_vel = possible_velocity/np.linalg.norm(possible_velocity)
+            required_pos = possible_positions[idx] + ball.pos
+
+            ball_dist = required_pos - other_ball.pos  
+            ball_unit_dist = ball_dist/np.linalg.norm(ball_dist)
+            diff = unit_vel.dot(ball_unit_dist)
+            ang = math.acos(diff)
+            if abs(ang) < 0.1:
+                print("angle diff", str(ang*180/math.pi))
+                state.balls = [b for b in state.balls if not b.number == ball.number]
+                found = back_propegate(state, other_ball, required_pos, possible_velocity)
+                if len(found) > 0:
+                    found_vels.extend(found)
+                else:
+                    break
+
     for idx, possible_velocity in enumerate(possible_velocities):
         unit_vel = possible_velocity/np.linalg.norm(possible_velocity)
         required_pos = possible_positions[idx] + ball.pos
         for other_ball in state.balls:
-            ball_dist = required_pos - other_ball.pos 
+            ball_dist = required_pos - other_ball.pos  
             ball_unit_dist = ball_dist/np.linalg.norm(ball_dist)
             diff = unit_vel.dot(ball_unit_dist)
-            if abs(diff) < 0.1:
+            ang = math.acos(diff)
+            if abs(ang) < 0.1:
+                print("angle diff", str(ang*180/math.pi))
                 state.balls = [b for b in state.balls if not b.number == ball.number]
                 found = back_propegate(state, other_ball, required_pos, possible_velocity)
                 if len(found) > 0:
@@ -192,6 +218,17 @@ def simulate_collisions(vel):
         unit_dist = np.array([x,y])
         dist = unit_dist * 10
         theta = math.acos(unit_vel.dot(unit_dist))
+        if abs(theta) < math.pi/2:
+            continue
+        velocities.append(vel * math.sin(theta/2))
+        positions.append(dist)
+    for x in frange(-1.0,1.0,0.1):
+        y = -math.sin(math.acos(x))
+        unit_dist = np.array([x,y])
+        dist = unit_dist * 10
+        theta = math.acos(unit_vel.dot(unit_dist))
+        if abs(theta) < math.pi/2:
+            continue
         velocities.append(vel * math.sin(theta/2))
         positions.append(dist)
 

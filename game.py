@@ -136,7 +136,6 @@ def play_bot_turn(state):
        for vel in cue_vel:
               print("x: ", str(round(vel[0],3)), " y: ", str(round(vel[1],3)))
        print(len(cue_vel))
-       time.sleep(60)
        ui.reRender(state.balls)
        if len(cue_vel) > 0:
               print("FOUND BOT VELS: " + str(cue_vel[0]))
