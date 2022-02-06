@@ -2,7 +2,7 @@ from copy import deepcopy, copy
 import math
 from typing import List
 import numpy as np
-import enginev2
+import engine
 import game
 from multiprocessing import Pool
 from ui import UIBall, reRender
@@ -54,7 +54,7 @@ def simulate(simulation):
     print("Starting simulation with velocity: " + str(simulation.vel), flush=True)
     usable_state.balls[0].vel = np.array(simulation.vel)
     while(not game.is_turn_done(usable_state)):
-        enginev2.update(1/60, usable_state.balls)
+        engine.update(1/60, usable_state.balls)
         
     #get a list of the removed balls in order to calculate score
     balls_removed = [ball for ball in old_balls if ball not in usable_state.balls]    
@@ -127,7 +127,7 @@ def get_best_move(state) -> np.ndarray:
 
     paths : List[Path] = []
     debug_info = []
-    for pocket in enginev2.POCKETS:
+    for pocket in engine.POCKETS:
         for ball in category_balls:
             #get relevent information about the pocket
             pocket_len = (pocket[0]-pocket[1])
@@ -223,7 +223,7 @@ def get_vel_for_dist(dist_mag, final_vel : np.ndarray) -> np.ndarray:
     current_vel = final_vel
     while abs(current_dist)<abs(dist_mag):
         current_dist += .01*(np.linalg.norm(current_vel))
-        current_vel  += current_vel*(1-enginev2.DECELERATION)*.01
+        current_vel  += current_vel*(1-engine.DECELERATION)*.01
     return current_vel
 
 

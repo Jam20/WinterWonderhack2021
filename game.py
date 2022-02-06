@@ -6,7 +6,7 @@ from ui import UIBall
 import pygame
 import math
 import time
-import botv2
+import bot
 import numpy as np
 MAX_VEL = 300
 
@@ -18,22 +18,22 @@ class GameState:
               UIBall(0, (85, 64)),
               
               UIBall(1, (170, 64)),
-              #UIBall(2, (180, 59)),
-              #UIBall(3, (180, 69)),
-              #UIBall(4, (190, 54)),
-              #UIBall(5, (190, 64)),
-              #UIBall(6, (190, 74)),
-              #UIBall(7,  (200, 49)),
+              UIBall(2, (180, 59)),
+              UIBall(3, (180, 69)),
+              UIBall(4, (190, 54)),
+              UIBall(5, (190, 64)),
+              UIBall(6, (190, 74)),
+              UIBall(7,  (200, 49)),
               
               UIBall(8,  (200, 59)),
               
               UIBall(9,  (200, 69)),
-              #UIBall(10, (200, 79)),
-              #UIBall(11,  (210, 44)),
-              #UIBall(12,  (210, 54)),
-              #UIBall(13,  (210, 64)),
-              #UIBall(14,  (210, 74)),
-              #UIBall(15,  (210, 84)),
+              UIBall(10, (200, 79)),
+              UIBall(11,  (210, 44)),
+              UIBall(12,  (210, 54)),
+              UIBall(13,  (210, 64)),
+              UIBall(14,  (210, 74)),
+              UIBall(15,  (210, 84)),
         ]     
 
        def print_state(self):
@@ -129,7 +129,7 @@ def play_player_turn(state):
                      play_player_turn(state)
 
 def play_bot_turn(state):
-       cue_vel = botv2.get_best_move(state)
+       cue_vel = bot.get_best_move(state)
        old_balls = copy.copy(state.balls)
        
        ui.reRender(state.balls)

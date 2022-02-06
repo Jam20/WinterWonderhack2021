@@ -1,7 +1,7 @@
 from copy import deepcopy
 import time
 import pygame
-import enginev2
+import engine
 from screeninfo import get_monitors
 import math
 import numpy as np
@@ -9,9 +9,9 @@ import threading
 
 frameTime = pygame.time.get_ticks()
 
-class UIBall(enginev2.Ball):
+class UIBall(engine.Ball):
     def __init__(self, number, pos, vel = (0,0)):
-        enginev2.Ball.__init__(self, pos, vel)
+        engine.Ball.__init__(self, pos, vel)
         self.number = number
         self.is_stripped = number>8
         self.is_cue = number == 0
@@ -21,17 +21,17 @@ monitors = get_monitors()
 monitor_number = 1 if len(get_monitors()) > 1 else 0
 
 #obtain the conversion information between engine position and pixels
-engine_width = enginev2.BOARD_WIDTH + enginev2.BOARD_THICKNESS * 2
+engine_width = engine.BOARD_WIDTH + engine.BOARD_THICKNESS * 2
 cm_to_px = int(monitors[monitor_number].width/engine_width)
 
 #half the conversion if on a high dpi display
 cm_to_px /= 2 if monitors[monitor_number].width > 2000 else 1
 
 #convert engine measurements to measurements usable by the ui
-board_width     = cm_to_px * enginev2.BOARD_WIDTH
-board_height    = cm_to_px * enginev2.BOARD_HEIGHT
-board_thickness = cm_to_px * enginev2.BOARD_THICKNESS
-ball_radius     = cm_to_px * enginev2.Ball((0, 0), (0, 0)).radius
+board_width     = cm_to_px * engine.BOARD_WIDTH
+board_height    = cm_to_px * engine.BOARD_HEIGHT
+board_thickness = cm_to_px * engine.BOARD_THICKNESS
+ball_radius     = cm_to_px * engine.Ball((0, 0), (0, 0)).radius
 
 #get screen size based on converted dimensions
 screen_width  = board_width  + board_thickness * 2
@@ -73,13 +73,13 @@ cue_image = pygame.transform.rotate(cue_image, 180) #flip pool cue as it is faci
 # Displays debug information to enable call in render/reRender function
 ##
 def draw_debug_info(debug_info):
-    for wall in enginev2.WALLS:
+    for wall in engine.WALLS:
         lines= np.array([wall[:2], wall[2:], wall[::2], wall[1::2]])
         for line in lines:
             line_pos = line * cm_to_px + board_thickness
             pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
-    for pocket in enginev2.POCKETS:
+    for pocket in engine.POCKETS:
         line_pos = pocket*cm_to_px + board_thickness
         pygame.draw.line(screen, (255,0,0), line_pos[0],line_pos[1])
 
@@ -140,7 +140,7 @@ def render(balls, currentVel = np.array([0,0])):
             exit()
     start_time = time.time()
     frame_time_sec = clock.tick(1000)/1000
-    x = threading.Thread(target=enginev2.update, args=(frame_time_sec, balls))
+    x = threading.Thread(target=engine.update, args=(frame_time_sec, balls))
     x.start()
     screen.fill((0, 0, 0))
     draw_table()
