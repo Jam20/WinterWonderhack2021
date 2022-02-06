@@ -18,24 +18,22 @@ class GameState:
               UIBall(0, (85, 64)),
               
               UIBall(1, (170, 64)),
-
-              UIBall(2, (180, 59)),
-              UIBall(3, (180, 69)),
-
-              UIBall(4, (190, 54)),
-              UIBall(5, (190, 64)),
-              UIBall(6, (190, 74)),
-
-              UIBall(7,  (200, 49)),
+              #UIBall(2, (180, 59)),
+              #UIBall(3, (180, 69)),
+              #UIBall(4, (190, 54)),
+              #UIBall(5, (190, 64)),
+              #UIBall(6, (190, 74)),
+              #UIBall(7,  (200, 49)),
+              
               UIBall(8,  (200, 59)),
+              
               UIBall(9,  (200, 69)),
-              UIBall(10, (200, 79)),
-
-              UIBall(11,  (210, 44)),
-              UIBall(12,  (210, 54)),
-              UIBall(13,  (210, 64)),
-              UIBall(14,  (210, 74)),
-              UIBall(15,  (210, 84)),
+              #UIBall(10, (200, 79)),
+              #UIBall(11,  (210, 44)),
+              #UIBall(12,  (210, 54)),
+              #UIBall(13,  (210, 64)),
+              #UIBall(14,  (210, 74)),
+              #UIBall(15,  (210, 84)),
         ]     
 
        def print_state(self):
@@ -131,15 +129,13 @@ def play_player_turn(state):
                      play_player_turn(state)
 
 def play_bot_turn(state):
-       cue_vel = botv2.getMoves(state)
+       cue_vel = botv2.get_best_move(state)
        old_balls = copy.copy(state.balls)
-       for vel in cue_vel:
-              print("x: ", str(round(vel[0],3)), " y: ", str(round(vel[1],3)))
-       print(len(cue_vel))
+       
        ui.reRender(state.balls)
-       if len(cue_vel) > 0:
-              print("FOUND BOT VELS: " + str(cue_vel[0]))
-              run_turn(state, cue_vel[0])
+       if np.max(np.abs(cue_vel)) > 0:
+              print("FOUND BOT VELS: " + str(cue_vel))
+              run_turn(state, cue_vel)
        else:
               print("NO BOT VEL FOUND")
               run_turn(state, (200,0))
